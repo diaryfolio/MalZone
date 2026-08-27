@@ -27,6 +27,7 @@ class PocContractTests(unittest.TestCase):
             "/api/v1alpha1/analyses",
             "/api/v1alpha1/analyses/{name}",
             "/api/v1alpha1/analyses/{name}/cancel",
+            "/api/v1alpha1/analyses/{name}/actions",
         ):
             self.assertIn(path, paths)
 
@@ -42,8 +43,18 @@ class PocContractTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("enum: [canary]", crd)
         self.assertIn("maximum: 60", crd)
+        self.assertIn("enum: [observe]", crd)
+        self.assertIn("maxItems: 20", crd)
         self.assertIn("malzone-poc-runner-deny-all", network_policy)
         self.assertIn("automountServiceAccountToken: false", service_accounts)
+        self.assertIn("malzone-siem-adapter", service_accounts)
+        self.assertIn("malzone-siem-sink", service_accounts)
+        siem = (REPO_ROOT / "charts/malzone/templates/siem.yaml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("http://malzone-siem-sink:8081/events", siem)
+        self.assertIn('args: ["siem-adapter"]', siem)
+        self.assertIn('args: ["siem-sink"]', siem)
 
     def test_windows_starter_is_halted_and_has_no_pod_network(self) -> None:
         starter = (

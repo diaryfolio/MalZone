@@ -31,3 +31,18 @@ func TestNewAnalysisAppliesSafeDefault(t *testing.T) {
 		t.Fatalf("namespace = %q", analysis.Metadata.Namespace)
 	}
 }
+
+func TestValidateInteractionIsObserveOnly(t *testing.T) {
+	t.Parallel()
+	valid := CreateInteractionRequest{Type: "observe", Rationale: "check state", ExpectedObservation: "runner active"}
+	if err := ValidateInteraction(valid); err != nil {
+		t.Fatal(err)
+	}
+	for _, actionType := range []string{"shell", "click", "type_text", "launch"} {
+		request := valid
+		request.Type = actionType
+		if err := ValidateInteraction(request); err == nil {
+			t.Fatalf("expected %q to be rejected", actionType)
+		}
+	}
+}

@@ -28,3 +28,20 @@ service:
 
 pocNetworkPolicy:
   enabled: true
+
+pocSiem:
+  enabled: true
+  adapterResources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 32Mi
+  sinkResources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 32Mi

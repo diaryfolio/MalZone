@@ -11,11 +11,13 @@ documented APIs with project-scoped authorization.
 flowchart LR
     UI["MalZone UI"] --> API["versioned public API"]
     Client["CLI / SDK / automation"] --> API
+    Agent["AI agent / playbook"] --> API
     SSO["local or enterprise OIDC"] --> API
     API --> Core["analysis/catalog/report services"]
     Core --> Events["durable internal events"]
     Events --> Webhook["signed webhook dispatcher"]
     Events --> Adapters["SIEM / SOAR / TIP adapters"]
+    API --> Actions["bounded action policy + audit"]
     Core --> OTel["logs + metrics + traces"]
     API --> Export["asynchronous report/evidence export"]
 ```
@@ -101,6 +103,7 @@ and an isolated dispatcher/adapter:
 
 Initial event types include `analysis.created`, `analysis.phase-changed`, `analysis.completed`,
 `analysis.failed`, `analysis.cleanup-blocked`, `detection.matched`, `report.ready`, `export.ready`,
+`interaction.proposed`, `interaction.admitted`, `interaction.denied`, `interaction.completed`,
 `image-build.completed`, and `image-version.revoked`. Payloads contain stable IDs, state, safe
 summary, report link, schema version, occurrence/ingest time, and delivery ID—not sample/artifact
 bytes or secrets.
@@ -135,6 +138,13 @@ An adapter descriptor declares provider, mode (`bundled`, `adapter`, `external`)
 (`designed`, `configuration-ready`, `validated`), endpoint class, credentials owner, allowed
 projects/data fields, event/report formats, retry/timeout, egress policy, retention, and conformance
 tests. Selecting a provider never implies that MalZone installed or validated the upstream product.
+
+The initial SIEM mapping uses ECS JSON; OCSF is a versioned alternative and STIX 2.1 is reserved for
+IOC/report exchange. Adapters consume canonical MalZone events at least once, generate deterministic
+event IDs, own durable checkpoints/retries/dead letters and apply project disclosure policy before
+mapping. Default SIEM events exclude binaries, screenshots, memory, secrets, clipboard values and
+raw behavioral payloads. See [AI automation and SIEM export](07-ai-automation-siem.md) for the action
+contract, model trust boundary, mapping rules and failure semantics.
 
 Workflow engines call MalZone with machine scopes and receive signed events. They do not get direct
 database, NATS, object-store, Kubernetes, or VM access. Consequential actions—controlled egress,
@@ -197,12 +207,14 @@ explicit high-risk connector, content scope, byte limits, quarantine semantics, 
 - report/export reproducibility, hash/signature, authorization, redaction and archive-bomb limits;
 - logs/traces/metrics/support bundles scanned for tokens, sample/evidence content, unbounded labels;
 - collector/SIEM/SOAR outage does not block stop/cleanup or silently discard required audit;
+- AI prompt injection, forbidden actions, stale evidence cursors, action budget/lease/approval
+  denial, model outage and interaction cancellation/replay;
 - fully disconnected deployment loads UI assets, authenticates locally, analyzes, reports, monitors,
   and exports through the API without an external call.
 
 ## Implementation status
 
-These API, SSO, observability, webhook, export, and adapter surfaces are designed. No runtime service
-or OpenAPI implementation is present yet. They remain `designed` in conformance until schemas,
-services, deployment, local integrations, and automated positive/negative evidence ship.
-
+These production API, SSO, observability, webhook, action-policy, export, and adapter surfaces are
+designed. A deliberately narrow POC action and ECS lifecycle sink may prove plumbing without
+claiming this production boundary. Production capabilities remain `designed` in conformance until
+their schemas, services, deployment, durable state and automated positive/negative evidence ship.

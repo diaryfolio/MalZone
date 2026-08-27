@@ -1,0 +1,15 @@
+title: MalZone Documentation
+description: Enterprise-controlled malware-analysis infrastructure design and implementation status
+url: https://diaryfolio.github.io
+baseurl: /MalZone
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+exclude:
+  - site
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default

@@ -118,3 +118,23 @@ func TestCancellationWaitsForDeletionBeforeTerminalStatus(t *testing.T) {
 		t.Fatalf("status=%#v", client.status)
 	}
 }
+
+func TestReconcileCompletesObserveActionOnce(t *testing.T) {
+	t.Parallel()
+	client := &fakeClient{job: kube.JobState{Active: 1}}
+	analysis := testAnalysis()
+	analysis.Spec.Interactions = []model.InteractionAction{{ID: "action-one", Type: "observe"}}
+	if err := testController(client).Reconcile(context.Background(), analysis); err != nil {
+		t.Fatal(err)
+	}
+	if len(client.status.InteractionResults) != 1 || client.status.InteractionResults[0].Status != "succeeded" {
+		t.Fatalf("status=%#v", client.status)
+	}
+	analysis.Status = client.status
+	if err := testController(client).Reconcile(context.Background(), analysis); err != nil {
+		t.Fatal(err)
+	}
+	if len(client.status.InteractionResults) != 1 {
+		t.Fatalf("action was completed more than once: %#v", client.status.InteractionResults)
+	}
+}

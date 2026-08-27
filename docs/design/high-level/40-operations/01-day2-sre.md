@@ -102,6 +102,11 @@ are evidence fields, not metric labels.
 
 ## Runbooks
 
+The current POC SIEM sink is memory-only and intentionally has no backup or recovery procedure.
+Adapter restart may redeliver terminal events; the deterministic ECS event ID makes sink-side
+deduplication testable. This is not evidence for the production checkpoint, retry, dead-letter,
+credential, TLS, disclosure, SLO, or disaster-recovery design.
+
 At minimum, versioned runbooks cover:
 
 - stop one analysis, all analyses on a node, or all admissions;
@@ -120,6 +125,9 @@ At minimum, versioned runbooks cover:
   clean an interrupted build;
 - recover local OIDC, rotate machine/webhook identities, replay dead-letter deliveries, and rebuild
   an export without changing its source report version.
+- revoke an AI controller lease, stop automated interaction without stopping analyst control,
+  inspect action-policy denials, disable a model endpoint, rotate SIEM credentials, drain/replay an
+  adapter dead-letter queue, and verify that integration outage did not delay cleanup.
 
 Every destructive or break-glass command first resolves exact analysis/session/resource labels and
 records an audit reason. Broad namespace deletion is not a normal cleanup mechanism.
@@ -165,7 +173,9 @@ Capacity models include analysis and builder VM RAM/vCPU, root clone IOPS/throug
 image-build duration/cache/mirror/candidate/promoted snapshot storage, Windows/application licensing,
 network capture throughput/storage, relay CPU/memory, events/sec, NATS retention, projector lag,
 object bytes, database write/index load, report/export workers, webhook/adapter backlog, and local
-OIDC/observability capacity. Per-profile benchmark
+OIDC/observability capacity. AI action rates, planner concurrency/token budgets, sanitized screenshot
+derivatives, SIEM adapter throughput/checkpoint lag, retry/DLQ capacity and destination quotas are
+modelled separately from lifecycle capacity. Per-profile benchmark
 results feed an admission controller. Queues have maximum age; users receive a clear queued,
 capacity-rejected, or quota-rejected state.
 

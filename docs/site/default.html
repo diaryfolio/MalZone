@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'">
+    <title>{% if page.title %}{{ page.title | escape }} · {% endif %}{{ site.title | escape }}</title>
+    <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}">
+    <script type="module" src="{{ '/assets/mermaid.js' | relative_url }}"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="{{ '/' | relative_url }}">MalZone</a>
+      <nav aria-label="Primary">
+        <a href="{{ '/docs/design/high-level/README.html' | relative_url }}">Architecture</a>
+        <a href="{{ '/docs/design/high-level/00-implementation-conformance.html' | relative_url }}">Conformance</a>
+        <a href="{{ '/docs/design/business/business-value-and-market-strategy.html' | relative_url }}">Business</a>
+        <a href="{{ '/docs/design/decisions/README.html' | relative_url }}">ADRs</a>
+        <a href="{{ '/contracts/README.html' | relative_url }}">Contracts</a>
+      </nav>
+    </header>
+    <div class="status-banner" role="note">
+      Target architecture is not shipped functionality. Check implementation conformance first.
+    </div>
+    <main>{{ content }}</main>
+    <footer>
+      Defensive research only · Static documentation · No deployment, sample, or evidence data
+    </footer>
+  </body>
+</html>

@@ -165,6 +165,9 @@ sequenceDiagram
 | Internet modes are `offline`, `simulated`, and `controlled` | Makes risk explicit and defaults safe | “Unrestricted Internet” is intentionally unsupported |
 | Exact software manifests build immutable images | Reproducible client-selected OS software without Internet/runtime installation | Requires catalog, mirror, hostile builder zone, licensing and promotion workflow |
 | UI and integrations share versioned APIs | Preserves API-first automation and prevents privileged UI-only behavior | Requires OpenAPI compatibility, machine identity, exports, webhooks and adapter conformance |
+| AI proposes closed-schema actions; deterministic policy executes them | Enables local agent automation without giving a probabilistic model a shell, console, infrastructure credential, or containment authority | Requires evidence cursors, action budgets, controller leases, approvals, hostile prompt-input tests and immutable action audit |
+| Canonical events feed credential-isolated SIEM adapters | Supports ECS/OCSF/STIX and customer systems without coupling core services or disclosing hostile content by default | Requires disclosure policy, deterministic event IDs, checkpoint/retry/dead-letter semantics and adapter-specific conformance |
+| Publish design as a static GitHub Pages artifact | Makes architecture, business intent and honest conformance easy to review | Public workflow must be opt-in and exclude secrets, malware, customer data and deployment-private supplements |
 
 ## Design governance and implementation synchronization
 
@@ -241,5 +244,5 @@ manual stop, bounded console access, and deterministic cleanup.
 
 Initial non-goals are bare-metal malware, macOS/Linux guests, kernel debugging, automatic malware
 family attribution, public anonymous submissions, multi-region active/active operation, stealth
-evasion features, direct RDP exposure, arbitrary packet forwarding, and automatic release of
-dropped files from quarantine.
+evasion features, direct RDP exposure, AI-accessible shells or arbitrary generated tools, arbitrary
+packet forwarding, and automatic release of dropped files from quarantine.

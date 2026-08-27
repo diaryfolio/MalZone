@@ -22,6 +22,7 @@ type Store interface {
 	GetAnalysis(context.Context, string) (model.Analysis, error)
 	CreateAnalysis(context.Context, model.Analysis) (model.Analysis, error)
 	RequestCancel(context.Context, string) (model.Analysis, error)
+	AppendInteraction(context.Context, string, model.InteractionAction) (model.Analysis, error)
 }
 
 type Server struct {
@@ -39,6 +40,7 @@ func New(store Store, namespace string, logger *slog.Logger) http.Handler {
 	mux.HandleFunc("POST /api/v1alpha1/analyses", server.create)
 	mux.HandleFunc("GET /api/v1alpha1/analyses/{name}", server.get)
 	mux.HandleFunc("POST /api/v1alpha1/analyses/{name}/cancel", server.cancel)
+	mux.HandleFunc("POST /api/v1alpha1/analyses/{name}/actions", server.createAction)
 	return requestLog(logger, securityHeaders(mux))
 }
 
@@ -139,17 +141,74 @@ func (s *Server) cancel(w http.ResponseWriter, request *http.Request) {
 	writeJSON(w, http.StatusAccepted, analysis)
 }
 
+func (s *Server) createAction(w http.ResponseWriter, request *http.Request) {
+	name := request.PathValue("name")
+	if err := model.ValidateName(name); err != nil {
+		problem(w, http.StatusBadRequest, "invalid_name", "Analysis name is invalid")
+		return
+	}
+	request.Body = http.MaxBytesReader(w, request.Body, 2048)
+	decoder := json.NewDecoder(request.Body)
+	decoder.DisallowUnknownFields()
+	var create model.CreateInteractionRequest
+	if err := decoder.Decode(&create); err != nil || ensureEOF(decoder) != nil {
+		problem(w, http.StatusBadRequest, "invalid_request", "Request body must contain one bounded JSON object")
+		return
+	}
+	if err := model.ValidateInteraction(create); err != nil {
+		problem(w, http.StatusUnprocessableEntity, "invalid_action", err.Error())
+		return
+	}
+	analysis, err := s.store.GetAnalysis(request.Context(), name)
+	if err != nil {
+		if kube.IsNotFound(err) {
+			problem(w, http.StatusNotFound, "analysis_not_found", "Analysis was not found")
+			return
+		}
+		s.internalError(w, request, err)
+		return
+	}
+	if analysis.Status.Phase != "Running" || analysis.Spec.CancelRequested {
+		problem(w, http.StatusConflict, "analysis_not_interactive", "POC observations require an active Running analysis")
+		return
+	}
+	if len(analysis.Spec.Interactions) >= 20 {
+		problem(w, http.StatusTooManyRequests, "action_budget_exhausted", "POC observation budget is 20 actions")
+		return
+	}
+	id, err := generatedID("action-")
+	if err != nil {
+		s.internalError(w, request, err)
+		return
+	}
+	action := model.NewInteraction(id, create, time.Now())
+	updated, err := s.store.AppendInteraction(request.Context(), name, action)
+	if err != nil {
+		if kube.IsConflict(err) {
+			problem(w, http.StatusConflict, "action_conflict", "Analysis changed; retry against current state")
+			return
+		}
+		s.internalError(w, request, err)
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]any{"action": action, "analysis": updated})
+}
+
 func (s *Server) internalError(w http.ResponseWriter, request *http.Request, err error) {
 	s.logger.Error("request failed", "method", request.Method, "path", request.URL.Path, "error", err)
 	problem(w, http.StatusInternalServerError, "internal_error", "The request could not be completed")
 }
 
 func generatedName() (string, error) {
+	return generatedID("analysis-")
+}
+
+func generatedID(prefix string) (string, error) {
 	value := make([]byte, 6)
 	if _, err := rand.Read(value); err != nil {
-		return "", fmt.Errorf("generate analysis name: %w", err)
+		return "", fmt.Errorf("generate identifier: %w", err)
 	}
-	return "analysis-" + hex.EncodeToString(value), nil
+	return prefix + hex.EncodeToString(value), nil
 }
 
 func ensureEOF(decoder *json.Decoder) error {

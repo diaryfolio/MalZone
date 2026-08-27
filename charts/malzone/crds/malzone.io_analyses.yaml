@@ -63,6 +63,32 @@ spec:
                 cancelRequested:
                   type: boolean
                   default: false
+                interactions:
+                  type: array
+                  maxItems: 20
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys: [id]
+                  items:
+                    type: object
+                    required: [id, type, rationale, expectedObservation, createdAt]
+                    properties:
+                      id:
+                        type: string
+                        pattern: "^action-[a-f0-9]{12}$"
+                      type:
+                        type: string
+                        enum: [observe]
+                      rationale:
+                        type: string
+                        minLength: 1
+                        maxLength: 256
+                      expectedObservation:
+                        type: string
+                        minLength: 1
+                        maxLength: 256
+                      createdAt:
+                        type: string
+                        format: date-time
             status:
               type: object
               properties:
@@ -101,3 +127,27 @@ spec:
                       type: boolean
                     kubernetesApiDenied:
                       type: boolean
+                interactionResults:
+                  type: array
+                  maxItems: 20
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys: [id]
+                  items:
+                    type: object
+                    required: [id, type, status, observedAt, detail]
+                    properties:
+                      id:
+                        type: string
+                        pattern: "^action-[a-f0-9]{12}$"
+                      type:
+                        type: string
+                        enum: [observe]
+                      status:
+                        type: string
+                        enum: [succeeded]
+                      observedAt:
+                        type: string
+                        format: date-time
+                      detail:
+                        type: string
+                        maxLength: 512

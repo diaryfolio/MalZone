@@ -22,3 +22,4 @@ flowchart LR
 | [0007](0007-gateway-appliance-boundary.md) | keep the production gateway off the cluster pod network | accepted |
 | [0008](0008-immutable-software-recipes.md) | compose client software through immutable offline image recipes | accepted |
 | [0009](0009-api-first-integrations.md) | expose UI and integrations through the same versioned API contracts | accepted |
+| [0010](0010-bounded-ai-interaction-and-siem-export.md) | bound AI actions through deterministic policy and isolate SIEM export | accepted |

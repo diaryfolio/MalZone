@@ -3,10 +3,13 @@ set -euo pipefail
 
 POC_NAMESPACE="${MALZONE_NAMESPACE:-malzone-system}"
 POC_PORT="${MALZONE_POC_PORT:-18080}"
+POC_SIEM_PORT="${MALZONE_SIEM_PORT:-18081}"
 POC_NAME="poc-e2e-$(date +%s)"
 POC_CANCEL_NAME="${POC_NAME}-cancel"
 POC_BASE_URL="http://127.0.0.1:${POC_PORT}"
+POC_SIEM_URL="http://127.0.0.1:${POC_SIEM_PORT}"
 POC_FORWARD_LOG="/tmp/malzone-poc-port-forward.log"
+POC_SIEM_FORWARD_LOG="/tmp/malzone-poc-siem-port-forward.log"
 
 cleanup() {
   kubectl -n "${POC_NAMESPACE}" delete analysis "${POC_NAME}" --ignore-not-found --wait=false >/dev/null 2>&1 || true
@@ -15,14 +18,22 @@ cleanup() {
     kill "${POC_FORWARD_PID}" >/dev/null 2>&1 || true
     wait "${POC_FORWARD_PID}" >/dev/null 2>&1 || true
   fi
+  if [[ -n "${POC_SIEM_FORWARD_PID:-}" ]]; then
+    kill "${POC_SIEM_FORWARD_PID}" >/dev/null 2>&1 || true
+    wait "${POC_SIEM_FORWARD_PID}" >/dev/null 2>&1 || true
+  fi
 }
 trap cleanup EXIT
 
 kubectl -n "${POC_NAMESPACE}" wait deployment/malzone-api deployment/malzone-operator \
+  deployment/malzone-siem-adapter deployment/malzone-siem-sink \
   --for=condition=Available --timeout=120s
 kubectl -n "${POC_NAMESPACE}" port-forward service/malzone-api "${POC_PORT}:8080" \
   >"${POC_FORWARD_LOG}" 2>&1 &
 POC_FORWARD_PID=$!
+kubectl -n "${POC_NAMESPACE}" port-forward service/malzone-siem-sink "${POC_SIEM_PORT}:8081" \
+  >"${POC_SIEM_FORWARD_LOG}" 2>&1 &
+POC_SIEM_FORWARD_PID=$!
 
 for _ in $(seq 1 30); do
   if curl --fail --silent "${POC_BASE_URL}/readyz" >/dev/null; then
@@ -31,12 +42,22 @@ for _ in $(seq 1 30); do
   sleep 1
 done
 curl --fail --silent "${POC_BASE_URL}/readyz" >/dev/null
+for _ in $(seq 1 30); do
+  if curl --fail --silent "${POC_SIEM_URL}/healthz" >/dev/null; then
+    break
+  fi
+  sleep 1
+done
+curl --fail --silent "${POC_SIEM_URL}/healthz" >/dev/null
 
 test "$(kubectl auth can-i create jobs.batch --as "system:serviceaccount:${POC_NAMESPACE}:malzone-api" -n "${POC_NAMESPACE}")" = "no"
 test "$(kubectl auth can-i list analyses.malzone.io --as "system:serviceaccount:${POC_NAMESPACE}:malzone-api" -n default)" = "no"
 test "$(kubectl auth can-i get secrets --as "system:serviceaccount:${POC_NAMESPACE}:malzone-operator" -n "${POC_NAMESPACE}")" = "no"
 test "$(kubectl auth can-i list analyses.malzone.io --as "system:serviceaccount:${POC_NAMESPACE}:malzone-operator" -n default)" = "no"
 test "$(kubectl auth can-i get pods --as "system:serviceaccount:${POC_NAMESPACE}:malzone-runner" -n "${POC_NAMESPACE}")" = "no"
+test "$(kubectl auth can-i list analyses.malzone.io --as "system:serviceaccount:${POC_NAMESPACE}:malzone-siem-adapter" -n "${POC_NAMESPACE}")" = "yes"
+test "$(kubectl auth can-i get secrets --as "system:serviceaccount:${POC_NAMESPACE}:malzone-siem-adapter" -n "${POC_NAMESPACE}")" = "no"
+test "$(kubectl auth can-i list analyses.malzone.io --as "system:serviceaccount:${POC_NAMESPACE}:malzone-siem-sink" -n "${POC_NAMESPACE}")" = "no"
 
 POC_REJECT_STATUS=$(curl --silent --output /dev/null --write-out '%{http_code}' \
   -H 'Content-Type: application/json' \
@@ -46,10 +67,42 @@ test "${POC_REJECT_STATUS}" = "422"
 
 curl --fail --silent \
   -H 'Content-Type: application/json' \
-  -d "{\"name\":\"${POC_NAME}\",\"sample\":{\"kind\":\"canary\",\"content\":\"hello-malzone\"},\"timeoutSeconds\":2}" \
+  -d "{\"name\":\"${POC_NAME}\",\"sample\":{\"kind\":\"canary\",\"content\":\"hello-malzone\"},\"timeoutSeconds\":8}" \
   "${POC_BASE_URL}/api/v1alpha1/analyses" >/dev/null
 
 POC_PHASE=""
+for _ in $(seq 1 30); do
+  POC_PHASE=$(curl --fail --silent "${POC_BASE_URL}/api/v1alpha1/analyses/${POC_NAME}" \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin).get("status", {}).get("phase", ""))')
+  if [[ "${POC_PHASE}" == "Running" ]]; then
+    break
+  fi
+  sleep 1
+done
+test "${POC_PHASE}" = "Running"
+
+POC_ACTION_REJECT_STATUS=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"shell","rationale":"attempt forbidden command","expectedObservation":"output"}' \
+  "${POC_BASE_URL}/api/v1alpha1/analyses/${POC_NAME}/actions")
+test "${POC_ACTION_REJECT_STATUS}" = "422"
+
+curl --fail --silent \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"observe","rationale":"confirm harmless runner state","expectedObservation":"runner state is available"}' \
+  "${POC_BASE_URL}/api/v1alpha1/analyses/${POC_NAME}/actions" >/dev/null
+
+POC_OBSERVED=""
+for _ in $(seq 1 30); do
+  POC_OBSERVED=$(curl --fail --silent "${POC_BASE_URL}/api/v1alpha1/analyses/${POC_NAME}" \
+    | python3 -c 'import json,sys; r=json.load(sys.stdin).get("status", {}).get("interactionResults", []); print(r[0].get("status", "") if r else "")')
+  if [[ "${POC_OBSERVED}" == "succeeded" ]]; then
+    break
+  fi
+  sleep 1
+done
+test "${POC_OBSERVED}" = "succeeded"
+
 POC_RESPONSE=""
 for _ in $(seq 1 60); do
   POC_RESPONSE=$(curl --fail --silent "${POC_BASE_URL}/api/v1alpha1/analyses/${POC_NAME}")
@@ -71,6 +124,30 @@ assert result["serviceAccountTokenAbsent"] is True
 assert result["kubernetesApiDenied"] is True
 assert len(result["sha256"]) == 64
 ' <<<"${POC_RESPONSE}"
+
+POC_SIEM_RESPONSE=""
+for _ in $(seq 1 30); do
+  POC_SIEM_RESPONSE=$(curl --fail --silent "${POC_SIEM_URL}/events")
+  if python3 -c 'import json,sys; name=sys.argv[1]; assert any(i.get("malzone",{}).get("analysis",{}).get("id") == name for i in json.load(sys.stdin)["items"])' "${POC_NAME}" <<<"${POC_SIEM_RESPONSE}" 2>/dev/null; then
+    break
+  fi
+  sleep 1
+done
+python3 -c '
+import json, sys
+name = sys.argv[1]
+raw = sys.stdin.read()
+assert "hello-malzone" not in raw
+assert "confirm harmless runner state" not in raw
+events = json.loads(raw)["items"]
+event = next(item for item in events if item["malzone"]["analysis"]["id"] == name)
+assert event["ecs"]["version"] == "9.5.0"
+assert event["event"]["action"] == "analysis-completed"
+assert event["event"]["outcome"] == "success"
+assert event["malzone"]["analysis"]["cleanup_verified"] is True
+assert event["malzone"]["analysis"]["interaction_count"] == 1
+assert len(event["event"]["id"]) == 64
+' "${POC_NAME}" <<<"${POC_SIEM_RESPONSE}"
 
 POC_RESIDUE=$(kubectl -n "${POC_NAMESPACE}" get jobs,pods \
   -l "malzone.io/analysis=${POC_NAME}" -o name)
@@ -115,4 +192,4 @@ POC_CANCEL_RESIDUE=$(kubectl -n "${POC_NAMESPACE}" get jobs,pods \
   -l "malzone.io/analysis=${POC_CANCEL_NAME}" -o name)
 test -z "${POC_CANCEL_RESIDUE}"
 
-echo "POC end-to-end test passed: success, prompt cancellation (${POC_CANCEL_SECONDS}s), cleanup, RBAC, token, and network denial checks"
+echo "POC end-to-end test passed: bounded observation, shell denial, ECS metadata export, success, prompt cancellation (${POC_CANCEL_SECONDS}s), cleanup, RBAC, token, and network denial checks"

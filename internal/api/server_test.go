@@ -44,6 +44,16 @@ func (f *fakeStore) RequestCancel(ctx context.Context, name string) (model.Analy
 	return analysis, nil
 }
 
+func (f *fakeStore) AppendInteraction(ctx context.Context, name string, action model.InteractionAction) (model.Analysis, error) {
+	for index := range f.items {
+		if f.items[index].Metadata.Name == name {
+			f.items[index].Spec.Interactions = append(f.items[index].Spec.Interactions, action)
+			return f.items[index], nil
+		}
+	}
+	return model.Analysis{}, &kube.Error{StatusCode: http.StatusNotFound}
+}
+
 func TestCreateAnalysis(t *testing.T) {
 	t.Parallel()
 	store := &fakeStore{}
@@ -72,6 +82,31 @@ func TestCreateRejectsArbitraryCommand(t *testing.T) {
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+}
+
+func TestCreateActionAcceptsObserveAndRejectsShell(t *testing.T) {
+	t.Parallel()
+	store := &fakeStore{items: []model.Analysis{{
+		Metadata: model.ObjectMeta{Name: "analysis-one"},
+		Status:   model.AnalysisStatus{Phase: "Running"},
+	}}}
+	handler := New(store, "malzone-system", slog.New(slog.NewTextHandler(io.Discard, nil)))
+
+	accepted := httptest.NewRecorder()
+	handler.ServeHTTP(accepted, httptest.NewRequest(http.MethodPost,
+		"/api/v1alpha1/analyses/analysis-one/actions",
+		bytes.NewBufferString(`{"type":"observe","rationale":"check runner","expectedObservation":"runner is active"}`)))
+	if accepted.Code != http.StatusAccepted || len(store.items[0].Spec.Interactions) != 1 {
+		t.Fatalf("status=%d body=%s interactions=%#v", accepted.Code, accepted.Body.String(), store.items[0].Spec.Interactions)
+	}
+
+	rejected := httptest.NewRecorder()
+	handler.ServeHTTP(rejected, httptest.NewRequest(http.MethodPost,
+		"/api/v1alpha1/analyses/analysis-one/actions",
+		bytes.NewBufferString(`{"type":"shell","rationale":"run command","expectedObservation":"output"}`)))
+	if rejected.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status=%d body=%s", rejected.Code, rejected.Body.String())
 	}
 }
 

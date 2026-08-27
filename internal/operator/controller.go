@@ -109,6 +109,7 @@ func (c *Controller) Reconcile(ctx context.Context, analysis model.Analysis) err
 	if err != nil {
 		return err
 	}
+	completeObservations(&analysis, time.Now().UTC())
 
 	now := time.Now().UTC().Format(time.RFC3339)
 	switch {
@@ -154,6 +155,29 @@ func (c *Controller) Reconcile(ctx context.Context, analysis model.Analysis) err
 	analysis.Status.RunnerJob = jobName
 	_, err = c.client.UpdateStatus(ctx, analysis)
 	return err
+}
+
+func completeObservations(analysis *model.Analysis, now time.Time) {
+	completed := make(map[string]struct{}, len(analysis.Status.InteractionResults))
+	for _, result := range analysis.Status.InteractionResults {
+		completed[result.ID] = struct{}{}
+	}
+	for _, action := range analysis.Spec.Interactions {
+		if action.Type != "observe" {
+			continue
+		}
+		if _, exists := completed[action.ID]; exists {
+			continue
+		}
+		analysis.Status.InteractionResults = append(analysis.Status.InteractionResults, model.InteractionResult{
+			ID:         action.ID,
+			Type:       action.Type,
+			Status:     "succeeded",
+			ObservedAt: now.Format(time.RFC3339),
+			Detail:     "POC observation: harmless runner state is available; no desktop or guest telemetry exists",
+		})
+		completed[action.ID] = struct{}{}
+	}
 }
 
 func (c *Controller) setTerminal(ctx context.Context, analysis model.Analysis, phase, message string) error {

@@ -17,8 +17,9 @@ mode, never a requirement or default.
 
 The production malware sandbox remains in the architecture/design stage. The repository now also
 contains a harmless, executable Kubernetes lifecycle POC: a Go API, `Analysis` CRD/operator, locked-
-down Linux canary runner, Helm chart, and k3d end-to-end test. It does not execute samples and is not
-a Windows/KubeVirt sandbox. The [implementation-conformance map](docs/design/high-level/00-implementation-conformance.md)
+down Linux canary runner, observe-only agent action, metadata-only ECS adapter/development sink,
+Helm chart, and k3d end-to-end test. It does not execute files, accept desktop input, run an AI
+model, or provide a Windows/KubeVirt sandbox. The [implementation-conformance map](docs/design/high-level/00-implementation-conformance.md)
 is the authoritative record of what is implemented, configuration-ready, designed, or not started.
 
 The original idea is preserved at [docs/prompts/v1.md](docs/prompts/v1.md). The canonical design
@@ -30,6 +31,7 @@ derived from it starts at [docs/design/high-level/design_01.md](docs/design/high
 flowchart LR
     SSO["local / enterprise OIDC"] --> Control["versioned local API + control plane"]
     Analyst["UI / CLI / automation"] --> Control
+    Agent["bounded AI agent"] --> Control
     Control --> KubeVirt["Kubernetes + KubeVirt operator"]
     Catalog["software catalog + isolated image builder"] --> KubeVirt
     KubeVirt --> VM["fresh disposable Windows VM"]
@@ -39,6 +41,7 @@ flowchart LR
     Gateway --> Sim["offline/simulated services"]
     Gateway -. "explicit controlled mode" .-> Internet["public Internet"]
     Evidence --> Export["report/export API + signed webhooks"]
+    Evidence --> SIEM["disclosure-controlled SIEM adapter"]
     Control --> Observe["local logs + metrics + traces"]
 ```
 
@@ -57,6 +60,7 @@ until all session resources are gone.
 - [Components and technology decisions](docs/design/high-level/10-overall/04-components-technology.md)
 - [Software catalog and custom Windows images](docs/design/high-level/10-overall/05-software-catalog-image-composition.md)
 - [API, SSO, observability, and workflow integrations](docs/design/high-level/10-overall/06-api-identity-observability-integrations.md)
+- [AI automation and SIEM export](docs/design/high-level/10-overall/07-ai-automation-siem.md)
 - [Kubernetes/KubeVirt deployment](docs/design/high-level/20-deployment/01-kubernetes-kubevirt.md)
 - [Threat model and zero-trust controls](docs/design/high-level/30-security/01-threat-model-zero-trust.md)
 - [Day-2 operations and SRE](docs/design/high-level/40-operations/01-day2-sre.md)
@@ -65,6 +69,7 @@ until all session resources are gone.
 - [Repository design-sync governance](docs/prompts/governance/README.md)
 - [Machine-readable contracts](contracts/README.md)
 - [Development POC runbook](docs/development/poc.md)
+- [GitHub Pages documentation portal](docs/index.md)
 
 ## Safety
 
