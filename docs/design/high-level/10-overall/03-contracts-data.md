@@ -44,6 +44,15 @@ method-bound upload/download grants issued only after authorization and quota ch
 A compatibility `POST /api/v1/analyses:upload-and-create` convenience endpoint may support small
 files, but internally uses the same upload/finalize/create state machine and limits body size.
 
+### Development POC contract
+
+`contracts/openapi/poc-v1alpha1.openapi.json` is a separate, explicitly non-production contract.
+It uses `/api/v1alpha1`, stores state only in a namespace-scoped POC `Analysis` CR, has no OIDC or
+project boundary, and accepts only bounded `sample.kind=canary` text. It exists to exercise API →
+CRD → operator → cleanup behavior on a development cluster. It does not implement, narrow, or
+supersede the `/api/v1` public surface above and cannot be promoted without a new synchronized
+contract and security review.
+
 Catalog/image-build routes and report/export/webhook/integration routes are specified in
 [Software Catalog and Windows Image Composition](05-software-catalog-image-composition.md) and
 [API, Identity, Observability, and Workflow Integrations](06-api-identity-observability-integrations.md).

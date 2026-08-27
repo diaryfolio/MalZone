@@ -15,9 +15,11 @@ mode, never a requirement or default.
 
 ## Current status
 
-The repository is in the architecture/design stage. No executable sandbox is claimed yet. The
-[implementation-conformance map](docs/design/high-level/00-implementation-conformance.md) is the
-authoritative record of what is implemented, configuration-ready, designed, or not started.
+The production malware sandbox remains in the architecture/design stage. The repository now also
+contains a harmless, executable Kubernetes lifecycle POC: a Go API, `Analysis` CRD/operator, locked-
+down Linux canary runner, Helm chart, and k3d end-to-end test. It does not execute samples and is not
+a Windows/KubeVirt sandbox. The [implementation-conformance map](docs/design/high-level/00-implementation-conformance.md)
+is the authoritative record of what is implemented, configuration-ready, designed, or not started.
 
 The original idea is preserved at [docs/prompts/v1.md](docs/prompts/v1.md). The canonical design
 derived from it starts at [docs/design/high-level/design_01.md](docs/design/high-level/design_01.md).
@@ -62,6 +64,7 @@ until all session resources are gone.
 - [Architecture decisions](docs/design/decisions/README.md)
 - [Repository design-sync governance](docs/prompts/governance/README.md)
 - [Machine-readable contracts](contracts/README.md)
+- [Development POC runbook](docs/development/poc.md)
 
 ## Safety
 

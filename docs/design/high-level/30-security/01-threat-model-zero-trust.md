@@ -1,5 +1,25 @@
 # Threat Model and Zero-Trust Controls
 
+## Development POC security boundary
+
+The executable POC is a lifecycle test harness, not a malware sandbox. It rejects all sample kinds
+except bounded canary text and never accepts a command, URL, executable, object key, or runner image.
+The runner uses a fixed image selected by the operator, runs non-root with a read-only filesystem,
+drops all Linux capabilities, receives no service-account token, and is selected by a deny-all
+ingress/egress NetworkPolicy. API and operator identities are separate and namespace-scoped.
+
+The POC API has no application authentication and is exposed only as ClusterIP; local testing uses
+`kubectl port-forward`, whose authorization belongs to Kubernetes. Therefore the POC must not be
+exposed through Ingress, used across trust boundaries, or used for samples. The Linux Job still has
+a pod-network interface and shares the container-host kernel, so it provides none of the Windows
+guest, hypervisor, secondary-network, relay, gateway, artifact, or hostile-content assurances in
+the production threat model below.
+
+The k3d E2E test measures runner NetworkPolicy denial only after a short convergence delay. An
+initial Pod-IP policy-programming window was observed and is a known reason this backend is canary-
+only. No hostile content may start in a boundary whose network denial is programmed after process
+start.
+
 ## Security objective
 
 A malicious sample may obtain full Windows administrator/kernel control without gaining a usable

@@ -52,14 +52,21 @@ class DesignAlignmentTests(unittest.TestCase):
                 resolved = (document.parent / target).resolve()
                 self.assertTrue(resolved.exists(), f"{document}: missing {target}")
 
-    def test_conformance_does_not_claim_runtime_is_implemented(self) -> None:
+    def test_conformance_distinguishes_poc_from_production_runtime(self) -> None:
         conformance = (DESIGN_ROOT / "00-implementation-conformance.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("There are no executable runtime services", conformance)
+        self.assertIn("There are no executable **production** runtime services", conformance)
         for capability in (
-            "Analysis REST/WebSocket API",
-            "`Analysis` CRD and operator",
+            "Harmless lifecycle POC API",
+            "POC `Analysis` CRD and Job operator",
+            "POC Helm packaging and runner isolation",
+        ):
+            row = next(line for line in conformance.splitlines() if capability in line)
+            self.assertIn("| implemented |", row)
+        for capability in (
+            "Production Analysis REST/WebSocket API",
+            "Production `Analysis` CRD and KubeVirt operator",
             "Disposable KubeVirt clone",
             "Windows collection agent",
         ):
@@ -72,7 +79,10 @@ class DesignAlignmentTests(unittest.TestCase):
         )
         patterns = (
             re.compile(r'@(?:app|router)\.(?:get|post|put|patch|delete)\(\s*["\']([^"\']+)'),
-            re.compile(r'\.(?:Get|Post|Put|Patch|Delete)\(\s*["\']([^"\']+)'),
+            re.compile(r'\b(?:app|router|r)\.(?:Get|Post|Put|Patch|Delete)\(\s*["\']([^"\']+)'),
+            re.compile(
+                r'HandleFunc\(\s*["\'](?:GET|POST|PUT|PATCH|DELETE)\s+([^"\']+)'
+            ),
         )
         source_roots = ["api", "cmd", "internal", "controller"]
         for root_name in source_roots:
@@ -81,6 +91,8 @@ class DesignAlignmentTests(unittest.TestCase):
                 continue
             for source in root.rglob("*"):
                 if source.suffix not in {".go", ".py", ".ts", ".tsx"}:
+                    continue
+                if source.name.endswith("_test.go"):
                     continue
                 text = source.read_text(encoding="utf-8")
                 for pattern in patterns:

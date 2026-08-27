@@ -1,5 +1,14 @@
 # Day-2 Operations and SRE
 
+## POC operating boundary
+
+The POC is operated only in `malzone-system`. `make deploy-poc` is the reproducible installation
+path; `make e2e-poc` is its release canary. Operators inspect `kubectl get analyses`, API/operator
+JSON logs, and Jobs labelled `malzone.io/analysis`. A terminal POC analysis must report
+`cleanupVerified: true` and have no matching Job or Pod. Failure to converge is a POC correctness
+bug and blocks promotion, but the POC has no HA, persistence, backup, SLO, authentication, audit
+store, evidence retention, or production incident-response claim.
+
 ## Operating model
 
 MalZone has three operational priorities in order:
