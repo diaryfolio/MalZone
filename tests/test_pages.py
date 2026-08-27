@@ -21,15 +21,19 @@ class PagesTests(unittest.TestCase):
                 "contracts/openapi/poc-v1alpha1.openapi.json",
                 "_layouts/default.html",
                 "assets/site.css",
+                "assets/og.png",
             )
             for relative in expected:
                 self.assertTrue((output / relative).is_file(), relative)
             self.assertTrue((output / "index.md").read_text(encoding="utf-8").startswith("---\n"))
             index = (output / "index.md").read_text(encoding="utf-8")
             self.assertNotIn(".md)", index)
-            self.assertIn("(README.html)", index)
-            self.assertIn("(docs/design/high-level/README.html)", index)
-            self.assertIn("(contracts/README.html)", index)
+            self.assertIn('href="docs/design/high-level/README.html"', index)
+            self.assertIn("Keep malware analysis", index)
+            self.assertIn('href="CLAUDE.html"', index)
+            layout = (output / "_layouts/default.html").read_text(encoding="utf-8")
+            self.assertIn('property="og:image"', layout)
+            self.assertIn("/assets/og.png", layout)
             self.assertFalse((output / "docs/prompts/v1.md").exists())
 
 

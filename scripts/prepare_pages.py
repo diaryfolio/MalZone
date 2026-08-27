@@ -26,6 +26,7 @@ SECRET_PATTERNS = (
     re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b"),
 )
 MARKDOWN_LINK = re.compile(r"(\[[^]]+\]\()([^)#?]+)\.md((?:#[^)]*)?\))")
+HTML_MARKDOWN_LINK = re.compile(r'(href=")([^"#?]+)\.md((?:#[^"]*)?")')
 LOCAL_LINK = re.compile(r"(\[[^]]+\]\()([^)]+)(\))")
 GITHUB_BLOB = "https://github.com/diaryfolio/MalZone/blob/main/"
 
@@ -101,12 +102,21 @@ def copy_publishable(source: Path, destination: Path, *, relocate_docs_index: bo
             "](../AGENTS.md)": "](AGENTS.md)",
             "](../CONTRIBUTING.md)": "](CONTRIBUTING.md)",
             "](prompts/": "](docs/prompts/",
+            'href="../README.md"': 'href="README.md"',
+            'href="design/': 'href="docs/design/',
+            'href="../contracts/': 'href="contracts/',
+            'href="development/': 'href="docs/development/',
+            'href="../CLAUDE.md"': 'href="CLAUDE.md"',
+            'href="../AGENTS.md"': 'href="AGENTS.md"',
+            'href="../CONTRIBUTING.md"': 'href="CONTRIBUTING.md"',
+            'href="prompts/': 'href="docs/prompts/',
         }
         for old, new in replacements.items():
             text = text.replace(old, new)
     destination.parent.mkdir(parents=True, exist_ok=True)
     if source.suffix == ".md":
         text = MARKDOWN_LINK.sub(r"\1\2.html\3", page_front_matter(text, source))
+        text = HTML_MARKDOWN_LINK.sub(r"\1\2.html\3", text)
     destination.write_text(text, encoding="utf-8")
 
 
@@ -135,6 +145,7 @@ def prepare(output: Path) -> None:
     shutil.copy2(REPO_ROOT / "docs/site/default.html", output / "_layouts/default.html")
     shutil.copy2(REPO_ROOT / "docs/site/site.css", output / "assets/site.css")
     shutil.copy2(REPO_ROOT / "docs/site/mermaid.js", output / "assets/mermaid.js")
+    shutil.copy2(REPO_ROOT / "docs/site/og.png", output / "assets/og.png")
 
 
 def main() -> None:
