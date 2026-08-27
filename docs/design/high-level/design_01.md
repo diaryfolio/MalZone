@@ -2,12 +2,12 @@
 
 ## Decision
 
-MalZone is a self-hosted, Kubernetes-native, ANY.RUN-style interactive malware-analysis platform.
-Every required runtime dependency can operate locally and air-gapped; no MalZone control, sample,
-telemetry, identity, or evidence service depends on a vendor cloud. It uses KubeVirt to run a
-fresh Windows clone for every analysis, places that guest on analysis-specific networks, mediates
-all communication through narrow relays, records behavior and artifacts, and destroys every
-analysis environment after collection.
+MalZone is enterprise-controlled malware-analysis infrastructure: a self-hosted, Kubernetes-native,
+ANY.RUN-style interactive malware-analysis platform. Every required runtime dependency can operate
+locally and air-gapped; no MalZone control, sample, telemetry, identity, or evidence service depends
+on a vendor cloud. It uses KubeVirt to run a fresh Windows clone for every analysis, places that
+guest on analysis-specific networks, mediates all communication through narrow relays, records
+behavior and artifacts, and destroys every analysis environment after collection.
 
 The control plane coordinates work. It does not execute samples. The analysis plane assumes the
 guest is fully compromised. The data plane stores quarantined inputs and untrusted outputs behind
@@ -21,6 +21,16 @@ evasion product, or a mechanism for delivering malware to third parties.
 “ANY.RUN-style” means the analyst experience—live desktop interaction, a live process tree and
 timeline, per-process behavior, network/DNS/HTTP views, detections, artifacts, and exportable
 reports—not a dependency on ANY.RUN or an attempt to reproduce its proprietary implementation.
+
+The corresponding commercial position is enterprise-controlled malware-analysis infrastructure
+for organisations that require local or air-gapped operation, data sovereignty, customer-specific
+Windows software images, API-led workflow integration, evidence provenance, and supported
+lifecycle management. MalZone does not assume that being self-hosted or Kubernetes-based is itself
+a durable advantage; the product must prove that it solves control and operational requirements
+better than cloud, private-cloud, commercial on-premises, and open-source alternatives. The market
+hypothesis, packaging principles, competitive boundaries, first sellable scope, risks, and paid
+validation gates are maintained in the
+[business value and market strategy](../business/business-value-and-market-strategy.md).
 
 ## System boundaries
 
@@ -155,6 +165,79 @@ sequenceDiagram
 | Internet modes are `offline`, `simulated`, and `controlled` | Makes risk explicit and defaults safe | “Unrestricted Internet” is intentionally unsupported |
 | Exact software manifests build immutable images | Reproducible client-selected OS software without Internet/runtime installation | Requires catalog, mirror, hostile builder zone, licensing and promotion workflow |
 | UI and integrations share versioned APIs | Preserves API-first automation and prevents privileged UI-only behavior | Requires OpenAPI compatibility, machine identity, exports, webhooks and adapter conformance |
+
+## Design governance and implementation synchronization
+
+MalZone treats architecture as an enforceable repository contract, not a one-time design document.
+Human and AI-assisted changes must classify their impact, update design and machine-readable
+contracts together with code, provide executable evidence, and report any remaining production
+gaps. A change is not complete when implementation, conformance, security, deployment, operations,
+tests, and documentation disagree.
+
+```mermaid
+flowchart LR
+    Request["requested change"] --> Rules["repository rules"]
+    Rules --> Classify["minor / major classification"]
+    Classify --> Impact["architecture + trust + ownership impact"]
+    Impact --> Sync["design + contracts + implementation"]
+    Sync --> Evidence["tests + negative security evidence"]
+    Evidence --> Gate["PR / CI design-sync gate"]
+    Gate --> Report["mandatory Design Sync Report"]
+    Report --> Conformance["honest implementation-conformance status"]
+```
+
+### Canonical governance assets
+
+| Asset | Purpose | Enforcement |
+|---|---|---|
+| [Canonical repository rules](../../../CLAUDE.md) | mandatory architecture, security, validation, documentation and completion rules for every human or AI-assisted change | requires change classification, synchronized design/contracts/tests and a Design Sync Report |
+| [Agent discovery rules](../../../AGENTS.md) | makes the canonical repository policy automatically discoverable to coding agents | directs every agent to `CLAUDE.md` and prohibits modifications to the reference `aiops-fabric` repository |
+| [Human contribution rules](../../../CONTRIBUTING.md) | concise contributor workflow for implementation and review | blocks unsupported maturity/security claims and points contributors to executable validation |
+| [Repository governance pack](../../prompts/governance/README.md) | major-change policy, reusable guardrail, reviewer checklist and change-record template | defines what must change together and when a change is not merge-ready |
+| [Major-change policy](../../prompts/governance/major-change-policy.md) | classifies service, contract, trust, networking, VM, data, deployment and operational changes | uncertainty is classified as major; major changes require conformance and affected design updates |
+| [Implementation conformance](00-implementation-conformance.md) | authoritative map of implemented, configuration-ready, designed and not-started capabilities | must change with every route, event, runtime edge, state owner, trust boundary, maturity or evidence change |
+| [Architecture decision records](../decisions/README.md) | preserves durable decisions and consequences instead of silently rewriting architecture history | significant decisions are added or superseded explicitly |
+| [Machine-readable contracts](../../../contracts/README.md) | versioned OpenAPI, CRD, event, profile, artifact, software and image boundaries | schemas/examples are validated and must agree with prose and runtime behavior |
+| [Pull-request template](../../../.github/pull_request_template.md) | requires the complete Design Sync Report and reviewer checklist | unresolved placeholders or `Sync Status: FAIL` are not merge-ready |
+| [Design-sync CI workflow](../../../.github/workflows/design-sync.yml) | runs governance, documentation, conformance and contract checks on pushes and pull requests | major PRs must update the conformance map and an affected high-level design or ADR |
+| [PR design-sync checker](../../../scripts/check_design_sync.py) | validates report fields, classification and changed design files | fails CI for incomplete reports or unsynchronized major changes |
+| [Automated alignment tests](../../../tests/test_design_alignment.py) | validates canonical documents, links, Mermaid blocks, maturity claims and implemented route coverage | `make design-check` is mandatory for every change |
+
+### Mandatory change workflow
+
+1. Read the repository rules and classify the change using the major-change policy. If uncertain,
+   classify it as `major`.
+2. Read this architecture index, the implementation-conformance map, affected domain design, ADRs,
+   and machine-readable contracts before implementation.
+3. Identify changes to APIs/events, runtime edges, state/data owners, trust boundaries, privileges,
+   credentials, Kubernetes/KubeVirt resources, cleanup obligations, SLOs and failure modes.
+4. Update design, contracts, implementation, deployment, security controls, operations and tests in
+   the same change set.
+5. Prove positive behavior and relevant authorization, isolation, hostile-content, fault and cleanup
+   denial behavior. Rendered manifests alone do not prove enforcement.
+6. Run `make design-check` and every implementation-specific validation target.
+7. Complete the mandatory Design Sync Report. Do not merge or claim completion unless its status is
+   `PASS` and known production gaps remain explicit.
+
+### Required completion report
+
+Every completed change reports:
+
+```text
+Design Sync Report
+- Change Classification: <minor|major>
+- Design Docs Updated: <list or none with reason>
+- Contracts Updated: <list or none>
+- Code/Deployment Areas Updated: <list or none>
+- Architecture Delta: <summary or none>
+- Threat/Trust Boundary Delta: <summary or none>
+- Tests/Evidence: <list>
+- Known Production Gaps: <list or none>
+- Sync Status: <PASS|FAIL>
+```
+
+This governance layer is itself part of the architecture. Removing, bypassing or weakening it is a
+major change and requires an explicit replacement with equivalent enforcement.
 
 ## Design scope and non-goals
 

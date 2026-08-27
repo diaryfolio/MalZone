@@ -1,8 +1,24 @@
 # MalZone High-Level Design
 
-This directory is the canonical architecture set for MalZone. Start with the architecture index,
-then read the implementation-conformance map before treating a target-state requirement as shipped
-functionality.
+MalZone is **enterprise-controlled malware-analysis infrastructure** for organisations that need to
+investigate hostile Windows files without giving a public cloud control of their samples, evidence,
+identity, or operations. It combines the live, interactive experience expected from a modern
+malware sandbox with local and air-gapped deployment, customer-specific Windows software images,
+API-first workflow integration, defensible evidence, and deterministic destruction of every
+analysis environment.
+
+The product is intended for government, defence, national CERT, critical-infrastructure,
+financial-services, healthcare, DFIR, security-vendor, and large MSSP teams whose privacy,
+sovereignty, audit, integration, or representative-environment requirements are not adequately met
+by a public analysis service. Its value is not Kubernetes or self-hosting by itself: MalZone must
+make sensitive analysis safer, reproducible, automatable, and supportable inside infrastructure the
+customer controls.
+
+This design set explains how that business promise becomes an enforceable product architecture.
+Begin with the [architecture index](design_01.md), review the
+[business value and market strategy](../business/business-value-and-market-strategy.md), and use the
+[implementation-conformance map](00-implementation-conformance.md) before treating any target-state
+capability as shipped functionality.
 
 ```mermaid
 flowchart LR
@@ -13,7 +29,9 @@ flowchart LR
     Truth --> Deploy["Kubernetes and KubeVirt"]
     Truth --> Security["Threat model and controls"]
     Truth --> Operations["Day-2 operations"]
+    Business["Business design<br/>market hypothesis + commercial gates"] --> Overall
     Overall & Images & Integrations & Deploy & Security & Operations --> Roadmap["Roadmap<br/>evidence-based promotion gates"]
+    Roadmap --> Business
 ```
 
 ## Design set
@@ -32,6 +50,7 @@ flowchart LR
 12. [Delivery roadmap and acceptance gates](50-roadmap/01-delivery-roadmap.md)
 13. [Architecture decision log](../decisions/README.md)
 14. [Repository design-sync governance](../../prompts/governance/README.md)
+15. [Business value and market strategy](../business/business-value-and-market-strategy.md)
 
 ## Reading rules
 
