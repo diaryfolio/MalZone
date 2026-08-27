@@ -115,6 +115,29 @@ func (c *Client) RequestCancel(ctx context.Context, name string) (model.Analysis
 	return analysis, err
 }
 
+func (c *Client) AppendInteraction(ctx context.Context, name string, action model.InteractionAction) (model.Analysis, error) {
+	analysis, err := c.GetAnalysis(ctx, name)
+	if err != nil {
+		return model.Analysis{}, err
+	}
+	if analysis.Status.Phase != "Running" || analysis.Spec.CancelRequested {
+		return model.Analysis{}, &Error{StatusCode: http.StatusConflict, Body: "analysis is no longer interactive"}
+	}
+	if len(analysis.Spec.Interactions) >= 20 {
+		return model.Analysis{}, &Error{StatusCode: http.StatusConflict, Body: "action budget exhausted"}
+	}
+	interactions := append([]model.InteractionAction(nil), analysis.Spec.Interactions...)
+	interactions = append(interactions, action)
+	patch := map[string]any{
+		"metadata": map[string]any{"resourceVersion": analysis.Metadata.ResourceVersion},
+		"spec":     map[string]any{"interactions": interactions},
+	}
+	var updated model.Analysis
+	err = c.do(ctx, http.MethodPatch, c.analysesPath()+"/"+url.PathEscape(name), patch,
+		"application/merge-patch+json", &updated)
+	return updated, err
+}
+
 func (c *Client) UpdateStatus(ctx context.Context, analysis model.Analysis) (model.Analysis, error) {
 	body := map[string]any{
 		"apiVersion": model.APIVersion,

@@ -1,8 +1,9 @@
 # Harmless Kubernetes Lifecycle POC
 
 This POC proves a small API → custom resource → operator → disposable runner → collection → cleanup
-loop on the local k3d cluster. It does **not** run malware, Windows, KubeVirt, arbitrary commands,
-URLs, uploaded files, or caller-selected images.
+loop on the local k3d cluster. It also proves an observe-only agent action and metadata-only ECS
+lifecycle export into a development sink. It does **not** run malware, Windows, KubeVirt, arbitrary
+commands, desktop input, URLs, uploaded files, or caller-selected images.
 
 ## Prerequisites
 
@@ -32,6 +33,9 @@ flowchart LR
     Job --> Result["hash + denial canaries"]
     Operator --> Cleanup["delete Job + Pods"]
     Cleanup --> Status["Succeeded + cleanupVerified"]
+    Agent["agent/client"] -->|"observe only"| API
+    Status --> Adapter["read-only ECS adapter"]
+    Adapter --> Sink["in-memory development sink"]
 ```
 
 Inspect without exposing the service:
@@ -40,10 +44,23 @@ Inspect without exposing the service:
 kubectl -n malzone-system get deploy,pods,service,networkpolicy
 kubectl -n malzone-system get analyses
 kubectl -n malzone-system logs deployment/malzone-operator
+kubectl -n malzone-system logs deployment/malzone-siem-adapter
 ```
 
 For a manual API call, start `kubectl -n malzone-system port-forward service/malzone-api 18080:8080`
 and POST the bounded canary contract shown in `scripts/poc_e2e.sh`.
+
+The same E2E script waits for `Running`, proves that `type=shell` is rejected, submits one
+`type=observe` request, and checks the operator's observation result. This is control-plane plumbing,
+not screen observation: the POC has no Windows guest, console relay, screenshot, or behavior
+collector.
+
+`malzone-siem-adapter` has only `get/list` access to POC `Analysis` resources. It emits one
+deterministic ECS-shaped lifecycle event after terminal cleanup is verified. The tokenless
+`malzone-siem-sink` keeps at most 100 events in memory and is available only as a ClusterIP. The E2E
+test verifies that canary content, action rationale, result summary, and observation detail are not
+exported. The sink has no authentication, persistence, TLS, durable checkpoint, retry queue,
+disclosure engine, or production SIEM compatibility and must never be exposed.
 
 ## Windows decision
 

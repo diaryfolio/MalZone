@@ -22,6 +22,7 @@ class DesignAlignmentTests(unittest.TestCase):
             "10-overall/04-components-technology.md",
             "10-overall/05-software-catalog-image-composition.md",
             "10-overall/06-api-identity-observability-integrations.md",
+            "10-overall/07-ai-automation-siem.md",
             "20-deployment/01-kubernetes-kubevirt.md",
             "30-security/01-threat-model-zero-trust.md",
             "40-operations/01-day2-sre.md",
@@ -43,7 +44,11 @@ class DesignAlignmentTests(unittest.TestCase):
             )
 
     def test_relative_markdown_links_resolve(self) -> None:
-        roots = list(REPO_ROOT.rglob("*.md"))
+        roots = [
+            path
+            for path in REPO_ROOT.rglob("*.md")
+            if "build" not in path.relative_to(REPO_ROOT).parts
+        ]
         for document in roots:
             for target in MARKDOWN_LINK.findall(document.read_text(encoding="utf-8")):
                 target = target.split("#", 1)[0]

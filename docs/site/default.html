@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#091016">
+    <meta name="description" content="{{ page.description | default: site.description | escape }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MalZone Documentation">
+    <meta property="og:title" content="{% if page.title %}{{ page.title | escape }} · {% endif %}MalZone">
+    <meta property="og:description" content="{{ page.description | default: site.description | escape }}">
+    <meta property="og:image" content="{{ '/assets/og.png' | absolute_url }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% if page.title %}{{ page.title | escape }} · {% endif %}MalZone">
+    <meta name="twitter:description" content="{{ page.description | default: site.description | escape }}">
+    <meta name="twitter:image" content="{{ '/assets/og.png' | absolute_url }}">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'">
+    <title>{% if page.title %}{{ page.title | escape }} · {% endif %}{{ site.title | escape }}</title>
+    <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}">
+    <script type="module" src="{{ '/assets/mermaid.js' | relative_url }}"></script>
+  </head>
+  <body class="{% if page.home %}page-home{% else %}page-document{% endif %}">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="site-header">
+      <div class="header-shell">
+        <a class="brand" href="{{ '/' | relative_url }}" aria-label="MalZone documentation home">
+          <span class="brand-mark" aria-hidden="true">MZ</span>
+          <span class="brand-copy">
+            <strong>MalZone</strong>
+            <small>Architecture portal</small>
+          </span>
+        </a>
+        <nav class="primary-nav" aria-label="Primary">
+          <a href="{{ '/docs/design/high-level/README.html' | relative_url }}">Architecture</a>
+          <a href="{{ '/docs/design/high-level/00-implementation-conformance.html' | relative_url }}">Conformance</a>
+          <a href="{{ '/docs/design/business/business-value-and-market-strategy.html' | relative_url }}">Business</a>
+          <a href="{{ '/docs/design/decisions/README.html' | relative_url }}">ADRs</a>
+          <a href="{{ '/contracts/README.html' | relative_url }}">Contracts</a>
+        </nav>
+        <a class="github-link" href="https://github.com/diaryfolio/MalZone" aria-label="View MalZone on GitHub">
+          <span aria-hidden="true">↗</span> GitHub
+        </a>
+      </div>
+    </header>
+
+    <div class="truth-banner" role="note">
+      <div class="truth-shell">
+        <span class="truth-state"><span class="status-dot" aria-hidden="true"></span>Active development</span>
+        <span>Target architecture is not shipped functionality.</span>
+        <a href="{{ '/docs/design/high-level/00-implementation-conformance.html' | relative_url }}">Check conformance <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+
+    {% if page.home %}
+      <main id="main-content" class="home-content">{{ content }}</main>
+    {% else %}
+      <details class="mobile-index">
+        <summary>Documentation index</summary>
+        <div class="mobile-index-links">
+          <a href="{{ '/docs/design/high-level/README.html' | relative_url }}">Architecture overview</a>
+          <a href="{{ '/docs/design/high-level/00-implementation-conformance.html' | relative_url }}">Implementation conformance</a>
+          <a href="{{ '/docs/design/high-level/10-overall/07-ai-automation-siem.html' | relative_url }}">AI automation &amp; SIEM</a>
+          <a href="{{ '/docs/design/high-level/30-security/01-threat-model-zero-trust.html' | relative_url }}">Security model</a>
+          <a href="{{ '/docs/development/poc.html' | relative_url }}">Kubernetes POC</a>
+        </div>
+      </details>
+      <div class="documentation-shell">
+        <aside class="sidebar" aria-label="Documentation sections">
+          <p class="sidebar-label">Design</p>
+          <a href="{{ '/docs/design/high-level/README.html' | relative_url }}">Architecture overview</a>
+          <a href="{{ '/docs/design/high-level/design_01.html' | relative_url }}">Architecture index</a>
+          <a href="{{ '/docs/design/high-level/00-implementation-conformance.html' | relative_url }}">Implementation conformance</a>
+          <a href="{{ '/docs/design/business/business-value-and-market-strategy.html' | relative_url }}">Business strategy</a>
+          <a href="{{ '/docs/design/decisions/README.html' | relative_url }}">Decision records</a>
+
+          <p class="sidebar-label">Core systems</p>
+          <a href="{{ '/docs/design/high-level/10-overall/05-software-catalog-image-composition.html' | relative_url }}">Software &amp; images</a>
+          <a href="{{ '/docs/design/high-level/10-overall/06-api-identity-observability-integrations.html' | relative_url }}">API &amp; integrations</a>
+          <a href="{{ '/docs/design/high-level/10-overall/07-ai-automation-siem.html' | relative_url }}">AI automation &amp; SIEM</a>
+          <a href="{{ '/docs/design/high-level/30-security/01-threat-model-zero-trust.html' | relative_url }}">Security model</a>
+          <a href="{{ '/docs/design/high-level/40-operations/01-day2-sre.html' | relative_url }}">Operations &amp; SRE</a>
+
+          <p class="sidebar-label">Build</p>
+          <a href="{{ '/contracts/README.html' | relative_url }}">Contracts</a>
+          <a href="{{ '/docs/development/poc.html' | relative_url }}">Kubernetes POC</a>
+          <a href="{{ '/docs/prompts/governance/README.html' | relative_url }}">Design governance</a>
+        </aside>
+        <main id="main-content" class="document-content">
+          <div class="document-kicker">MalZone / Documentation</div>
+          <article>{{ content }}</article>
+        </main>
+      </div>
+    {% endif %}
+
+    <footer class="site-footer">
+      <div class="footer-shell">
+        <div>
+          <a class="footer-brand" href="{{ '/' | relative_url }}">MalZone</a>
+          <p>Enterprise-controlled malware-analysis infrastructure.</p>
+        </div>
+        <div class="footer-meta">
+          <span>Defensive research only</span>
+          <span>Static documentation</span>
+          <span>No deployment, sample, or evidence data</span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

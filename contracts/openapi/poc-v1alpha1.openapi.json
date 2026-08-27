@@ -46,6 +46,24 @@
         "operationId": "cancelPocAnalysis",
         "responses": {"202": {"description": "Cancellation requested", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Analysis"}}}}, "404": {"$ref": "#/components/responses/Problem"}}
       }
+    },
+    "/api/v1alpha1/analyses/{name}/actions": {
+      "parameters": [{"name": "name", "in": "path", "required": true, "schema": {"type": "string", "maxLength": 63}}],
+      "post": {
+        "operationId": "createPocObservation",
+        "description": "Records one safe observation request while the harmless runner is active. Shell and desktop-input actions are rejected.",
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CreateInteraction"}}}
+        },
+        "responses": {
+          "202": {"description": "Observation accepted", "content": {"application/json": {"schema": {"type": "object"}}}},
+          "404": {"$ref": "#/components/responses/Problem"},
+          "409": {"$ref": "#/components/responses/Problem"},
+          "422": {"$ref": "#/components/responses/Problem"},
+          "429": {"$ref": "#/components/responses/Problem"}
+        }
+      }
     }
   },
   "components": {
@@ -73,6 +91,16 @@
         "properties": {
           "kind": {"type": "string", "const": "canary"},
           "content": {"type": "string", "minLength": 1, "maxLength": 256}
+        }
+      },
+      "CreateInteraction": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "rationale", "expectedObservation"],
+        "properties": {
+          "type": {"type": "string", "const": "observe"},
+          "rationale": {"type": "string", "minLength": 1, "maxLength": 256},
+          "expectedObservation": {"type": "string", "minLength": 1, "maxLength": 256}
         }
       },
       "Analysis": {

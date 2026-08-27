@@ -20,6 +20,14 @@ initial Pod-IP policy-programming window was observed and is a known reason this
 only. No hostile content may start in a boundary whose network denial is programmed after process
 start.
 
+The POC agent path accepts one `observe` enum while the canary runner is active. It records bounded
+rationale/expectation but does not inspect a screen or execute guest input; shell, click, typing,
+launch, unknown fields, non-running phases and actions beyond the CRD budget are rejected. The POC
+ECS adapter can only list/get `Analysis` resources, exports terminal cleanup-verified metadata to an
+in-cluster memory sink, and does not export canary content, result summaries, action rationale or
+observation details. The unauthenticated sink is development-only ClusterIP infrastructure and must
+not be exposed or treated as a SIEM security boundary.
+
 ## Security objective
 
 A malicious sample may obtain full Windows administrator/kernel control without gaining a usable
@@ -52,6 +60,8 @@ flowchart LR
 - samples, artifacts, reports, analyst identities, project membership, comments, and audit trails;
 - OIDC sessions, machine clients, OpenAPI contracts, exports, webhook secrets/deliveries, adapter
   credentials, monitoring and audit pipelines;
+- model endpoints, prompt policy and model/version identity, action leases/budgets/approvals,
+  observation cursors, normalized interaction audit, SIEM checkpoints and disclosure policy;
 - private/internal network addresses, public-IP reputation, bandwidth, and third-party systems;
 - isolation between concurrent analyses and the integrity/availability of lifecycle cleanup.
 
@@ -64,6 +74,8 @@ flowchart LR
 | sample forges agent telemetry, time, filenames, hashes claimed before server verification | yes |
 | sample scans/attacks both guest NICs and floods protocols | yes |
 | malicious authorized analyst submits pathological content or abuses console/API | yes |
+| guest evidence attempts prompt injection against an AI agent or analyst | yes |
+| local or external model emits malicious, stale, malformed, or hallucinated actions | yes |
 | project administrator submits a malicious or compromised “software installer” | yes |
 | stolen ordinary analyst token | yes; bounded by project RBAC, expiry, quotas, and audit |
 | malicious cluster administrator | not fully contained; mitigate with split duties and external audit |
@@ -84,6 +96,8 @@ flowchart LR
 | API/UI → artifact | project permission, disposition policy, optional reauth/reason | attachment download, isolated preview origin, scanner/decompression bounds |
 | image-build agent → build relay | one-use build identity, exact recipe/artifact scope | separate builder network/nodes, no analysis or pod network |
 | webhook/adapter → external system | connector-owned identity, disclosure policy and signed delivery | isolated adapter namespace, destination egress allow-list |
+| AI agent/planner → action API | scoped machine identity, closed schema, immutable profile, current cursor, budget/lease and approval | no shell/VNC/Kubernetes/storage access; deterministic policy re-check at execution |
+| canonical events → SIEM adapter | dedicated subscription and project disclosure policy | adapter owns destination credential/checkpoint; no artifact-read permission |
 
 ## Threat/control matrix
 

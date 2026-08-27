@@ -179,10 +179,16 @@ Threat-intelligence, SIEM, MISP, or cloud reputation integrations are optional a
 disabled in the air-gapped profile, never receive samples by default, minimize submitted fields,
 own their credentials, and record every disclosure decision.
 
-Automated interactivity is a later local playbook engine, not opaque AI control of the desktop. Each
-action declares its trigger, bounds, resulting keyboard/pointer/input events, and rationale so an
-analyst can replay what automation did. Model-assisted summaries are optional local adapters and
-must cite underlying evidence; they never replace the deterministic report.
+Automated interactivity is a bounded local playbook and model-planning layer, not opaque AI control
+of the desktop. An agent authenticates as a machine API client and proposes a closed-schema action.
+A deterministic interaction-policy service validates the current evidence cursor, immutable
+profile, action allow-list, rate/time budgets, controller lease, expiry and approval before the
+session relay emits normalized keyboard or pointer input. Shells, arbitrary commands, arbitrary
+URLs, model-defined tools and direct VNC are outside the contract. Each action records its trigger,
+bounds, normalized input, policy/model versions, evidence cursor, rationale and result so an analyst
+can inspect what automation did. Model-assisted summaries cite underlying evidence and never
+replace the deterministic report. The complete contract and SIEM boundary are in
+[AI automation and SIEM export](07-ai-automation-siem.md).
 
 ## Repository target structure
 

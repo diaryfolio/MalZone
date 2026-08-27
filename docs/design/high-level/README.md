@@ -26,11 +26,12 @@ flowchart LR
     Truth --> Overall["Overall design<br/>flows, contracts, ownership"]
     Truth --> Images["Software catalog<br/>immutable image composition"]
     Truth --> Integrations["API / SSO / observability<br/>workflow integrations"]
+    Truth --> Automation["bounded AI interaction<br/>SIEM export"]
     Truth --> Deploy["Kubernetes and KubeVirt"]
     Truth --> Security["Threat model and controls"]
     Truth --> Operations["Day-2 operations"]
     Business["Business design<br/>market hypothesis + commercial gates"] --> Overall
-    Overall & Images & Integrations & Deploy & Security & Operations --> Roadmap["Roadmap<br/>evidence-based promotion gates"]
+    Overall & Images & Integrations & Automation & Deploy & Security & Operations --> Roadmap["Roadmap<br/>evidence-based promotion gates"]
     Roadmap --> Business
 ```
 
@@ -44,13 +45,15 @@ flowchart LR
 6. [Components and technology decisions](10-overall/04-components-technology.md)
 7. [Software catalog and Windows image composition](10-overall/05-software-catalog-image-composition.md)
 8. [API, identity, observability, and workflow integrations](10-overall/06-api-identity-observability-integrations.md)
-9. [Kubernetes and KubeVirt deployment](20-deployment/01-kubernetes-kubevirt.md)
-10. [Threat model and zero-trust controls](30-security/01-threat-model-zero-trust.md)
-11. [Day-2 operations and SRE](40-operations/01-day2-sre.md)
-12. [Delivery roadmap and acceptance gates](50-roadmap/01-delivery-roadmap.md)
-13. [Architecture decision log](../decisions/README.md)
-14. [Repository design-sync governance](../../prompts/governance/README.md)
-15. [Business value and market strategy](../business/business-value-and-market-strategy.md)
+9. [AI automation and SIEM export](10-overall/07-ai-automation-siem.md)
+10. [Kubernetes and KubeVirt deployment](20-deployment/01-kubernetes-kubevirt.md)
+11. [Threat model and zero-trust controls](30-security/01-threat-model-zero-trust.md)
+12. [Day-2 operations and SRE](40-operations/01-day2-sre.md)
+13. [Delivery roadmap and acceptance gates](50-roadmap/01-delivery-roadmap.md)
+14. [Architecture decision log](../decisions/README.md)
+15. [Repository design-sync governance](../../prompts/governance/README.md)
+16. [Business value and market strategy](../business/business-value-and-market-strategy.md)
+17. [GitHub Pages documentation portal](../../index.md)
 
 ## Reading rules
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const (
@@ -35,9 +36,10 @@ type AnalysisList struct {
 }
 
 type AnalysisSpec struct {
-	Sample          SampleSpec `json:"sample"`
-	TimeoutSeconds  int        `json:"timeoutSeconds"`
-	CancelRequested bool       `json:"cancelRequested,omitempty"`
+	Sample          SampleSpec          `json:"sample"`
+	TimeoutSeconds  int                 `json:"timeoutSeconds"`
+	CancelRequested bool                `json:"cancelRequested,omitempty"`
+	Interactions    []InteractionAction `json:"interactions,omitempty"`
 }
 
 type SampleSpec struct {
@@ -46,15 +48,32 @@ type SampleSpec struct {
 }
 
 type AnalysisStatus struct {
-	ObservedGeneration int64           `json:"observedGeneration,omitempty"`
-	Phase              string          `json:"phase,omitempty"`
-	PendingOutcome     string          `json:"pendingOutcome,omitempty"`
-	Message            string          `json:"message,omitempty"`
-	RunnerJob          string          `json:"runnerJob,omitempty"`
-	StartedAt          string          `json:"startedAt,omitempty"`
-	CompletedAt        string          `json:"completedAt,omitempty"`
-	CleanupVerified    bool            `json:"cleanupVerified,omitempty"`
-	Result             *AnalysisResult `json:"result,omitempty"`
+	ObservedGeneration int64               `json:"observedGeneration,omitempty"`
+	Phase              string              `json:"phase,omitempty"`
+	PendingOutcome     string              `json:"pendingOutcome,omitempty"`
+	Message            string              `json:"message,omitempty"`
+	RunnerJob          string              `json:"runnerJob,omitempty"`
+	StartedAt          string              `json:"startedAt,omitempty"`
+	CompletedAt        string              `json:"completedAt,omitempty"`
+	CleanupVerified    bool                `json:"cleanupVerified,omitempty"`
+	Result             *AnalysisResult     `json:"result,omitempty"`
+	InteractionResults []InteractionResult `json:"interactionResults,omitempty"`
+}
+
+type InteractionAction struct {
+	ID                  string `json:"id"`
+	Type                string `json:"type"`
+	Rationale           string `json:"rationale"`
+	ExpectedObservation string `json:"expectedObservation"`
+	CreatedAt           string `json:"createdAt"`
+}
+
+type InteractionResult struct {
+	ID         string `json:"id"`
+	Type       string `json:"type"`
+	Status     string `json:"status"`
+	ObservedAt string `json:"observedAt"`
+	Detail     string `json:"detail"`
 }
 
 type AnalysisResult struct {
@@ -68,6 +87,12 @@ type CreateAnalysisRequest struct {
 	Name           string     `json:"name,omitempty"`
 	Sample         SampleSpec `json:"sample"`
 	TimeoutSeconds int        `json:"timeoutSeconds,omitempty"`
+}
+
+type CreateInteractionRequest struct {
+	Type                string `json:"type"`
+	Rationale           string `json:"rationale"`
+	ExpectedObservation string `json:"expectedObservation"`
 }
 
 func NewAnalysis(namespace string, request CreateAnalysisRequest) Analysis {
@@ -108,6 +133,29 @@ func ValidateCreate(request CreateAnalysisRequest) error {
 		return errors.New("timeoutSeconds must be between 1 and 60 when specified")
 	}
 	return nil
+}
+
+func ValidateInteraction(request CreateInteractionRequest) error {
+	if request.Type != "observe" {
+		return errors.New("POC accepts only interaction type=observe; shell and desktop input are unavailable")
+	}
+	if strings.TrimSpace(request.Rationale) == "" || len(request.Rationale) > 256 {
+		return errors.New("rationale is required and must not exceed 256 bytes")
+	}
+	if strings.TrimSpace(request.ExpectedObservation) == "" || len(request.ExpectedObservation) > 256 {
+		return errors.New("expectedObservation is required and must not exceed 256 bytes")
+	}
+	return nil
+}
+
+func NewInteraction(id string, request CreateInteractionRequest, now time.Time) InteractionAction {
+	return InteractionAction{
+		ID:                  id,
+		Type:                request.Type,
+		Rationale:           strings.TrimSpace(request.Rationale),
+		ExpectedObservation: strings.TrimSpace(request.ExpectedObservation),
+		CreatedAt:           now.UTC().Format(time.RFC3339),
+	}
 }
 
 func IsTerminal(phase string) bool {

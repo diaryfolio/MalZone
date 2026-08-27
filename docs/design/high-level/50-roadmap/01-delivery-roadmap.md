@@ -116,8 +116,11 @@ Deliver:
 - detailed per-process event view, HTTP/TLS/DNS/Suricata views, PCAP inspection/export;
 - tags, comments, verdict, comparison, search, collaboration policy, keyboard accessibility;
 - transparent local automated-interaction playbooks with action trail;
+- optional local AI planner using the same closed action API, evidence citations, immutable
+  model/prompt-policy attribution, action budgets and human approval gates;
 - signed metadata webhooks, JSON/STIX/MISP exports, and optional local SIEM/SOAR/TIP adapters with
-  connector-owned credentials, retries/dead letter and disclosure policy.
+  connector-owned credentials, ECS mapping, deterministic IDs, checkpoints, retries/dead letter and
+  disclosure policy.
 
 Gate: end-to-end SOC usability tests complete representative file, document, archive-password, URL,
 and phishing workflows; all actions are auditable; optional adapters disclose no data when disabled.
@@ -149,6 +152,7 @@ isolation and cleanup gates.
 | reporting | cleanup proof | metadata | raw event history | deterministic full report | exports/integrations |
 | custom OS software | exact manifest/profile canary | catalog/build API | promoted image selection | provenance linked | client recipes and lifecycle |
 | SSO/API/workflows | contract skeleton | local OIDC + machine API | live resumable API | report/export API | signed webhooks/adapters |
+| AI interaction/SIEM | closed action/event contracts | scoped machine clients | policy + action audit | evidence citations | local planner + ECS/OCSF/STIX adapters |
 
 ## Definition of done for every phase
 
