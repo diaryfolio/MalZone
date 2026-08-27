@@ -22,45 +22,6 @@ authoritative record of what is implemented, configuration-ready, designed, or n
 The original idea is preserved at [docs/prompts/v1.md](docs/prompts/v1.md). The canonical design
 derived from it starts at [docs/design/high-level/design_01.md](docs/design/high-level/design_01.md).
 
-## Business value and positioning
-
-MalZone is commercially strongest as **enterprise-controlled malware-analysis infrastructure**, not
-as a generic local copy of an existing cloud sandbox. Its initial market hypothesis is that
-government, defence, national CERT, critical-infrastructure, financial-services, healthcare, DFIR,
-security-vendor, and large MSSP teams will pay for capabilities that public-cloud analysis cannot
-always provide:
-
-- samples, telemetry, evidence, identity, monitoring, and reports remain under customer control;
-- required workflows continue to operate locally and in air-gapped environments;
-- exact, reviewed Windows software versions can be composed into reproducible immutable images;
-- analysts receive live interaction and behavioural evidence without direct access to KubeVirt or
-  the cluster;
-- versioned APIs, machine identities, exports, and signed webhooks integrate with local SOC, SIEM,
-  SOAR, TIP, case-management, and evidence workflows;
-- evidence provenance, audit, isolation, retention, and deterministic cleanup are product
-  properties rather than deployment assumptions.
-
-The market is real but competitive. Open-source CAPE already provides substantial sandbox and
-instrumentation capability; Joe Sandbox offers an on-premises product; Hatching Triage offers live
-interaction, APIs, custom profiles, and private deployments; and cloud services such as ANY.RUN
-offer convenience, broad adoption, and a mature analyst experience. MalZone therefore must not
-compete merely on executing a file or displaying a process tree. Its differentiation must come
-from deployability, data sovereignty, API-first operations, customer-specific image composition,
-defensible evidence, and supported lifecycle management.
-
-The first sellable scope should remain deliberately narrow: one supported Windows 11 baseline,
-file submission, live desktop and core process/file/registry/network telemetry, PCAP, structured
-reports, offline/simulated networking, OIDC/RBAC/audit, deterministic cleanup, and a small tested
-software catalogue. Advanced debugging, broad guest-OS support, large-scale memory forensics, and
-speculative AI features should follow only after the core isolation and evidence loop is reliable.
-
-Commercial validation should precede a large implementation investment. The current gate is to
-secure design-partner evidence from target organisations and, ideally, paid pilots showing that
-customers specifically need local or air-gapped deployment, custom Windows profiles, API
-integration, and supported updates. The full hypothesis, competitive assessment, packaging model,
-risks, validation questions, and go/no-go measures are in the
-[business value and market strategy](docs/design/business/business-value-and-market-strategy.md).
-
 ## Architecture in one view
 
 ```mermaid
