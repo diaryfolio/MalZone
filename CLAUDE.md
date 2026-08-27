@@ -109,23 +109,14 @@ As implementation targets are introduced, the same change must add stable Make t
 Do not add a validation requirement only in prose: add the executable target or record the gap as
 `designed` in the conformance map.
 
-## Required completion block
+## Automated changed-file gate
 
-Every completed change must include:
+The changed-file design-sync gate derives its decision from the repository diff. It does not
+inspect or require pull-request description fields. Changes under implementation, deployment,
+guest, operator, service, or contract paths must update the implementation-conformance map and an
+affected high-level design or ADR in the same change set.
 
-```text
-Design Sync Report
-- Change Classification: <minor|major>
-- Design Docs Updated: <list or none with reason>
-- Contracts Updated: <list or none>
-- Code/Deployment Areas Updated: <list or none>
-- Architecture Delta: <summary or none>
-- Threat/Trust Boundary Delta: <summary or none>
-- Tests/Evidence: <list>
-- Known Production Gaps: <list or none>
-- Sync Status: <PASS|FAIL>
-```
-
-`Sync Status` is `FAIL` when implementation, contracts, security controls, deployment, operations,
-tests, or design documentation disagree. Do not merge or claim completion with failed design sync.
-
+Human and AI-assisted work must still classify changes before implementation, describe material
+architecture or trust-boundary effects in normal review communication, run required validation,
+and keep known production gaps explicit. Do not merge or claim completion when implementation,
+contracts, security controls, deployment, operations, tests, and design documentation disagree.

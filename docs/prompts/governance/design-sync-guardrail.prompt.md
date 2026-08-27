@@ -12,7 +12,8 @@ Use this workflow before making code, contract, deployment, security, VM-image, 
 4. Update design/contracts and implementation in the same change set.
 5. Add tests that prove positive behavior and relevant denial/cleanup behavior.
 6. Run `make design-check` plus all implementation-specific validation.
-7. Return the root `CLAUDE.md` Design Sync Report. Refuse to claim completion if it fails.
+7. Summarize material design impact, validation evidence, and known gaps. Refuse to claim
+   completion when design, contracts, implementation, deployment, or evidence disagree.
 
 ## Hard rules
 
@@ -22,4 +23,3 @@ Use this workflow before making code, contract, deployment, security, VM-image, 
 - Never bypass cleanup, quarantine, evidence provenance, or air-gapped defaults for convenience.
 - If unsure whether a change is major or whether a control is enforced, treat it as major and the
   control as unproven.
-

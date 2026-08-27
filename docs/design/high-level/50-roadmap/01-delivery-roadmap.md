@@ -154,4 +154,4 @@ isolation and cleanup gates.
 - dashboards, alerts, backup/restore, failure modes, and runbooks exist for shipped state;
 - mocks/development issuers/single-node limitations are visibly marked non-production;
 - known gaps have an owner and are not presented as working functionality.
-- the mandatory Design Sync Report is complete and CI governance/conformance checks pass.
+- material design impact and known gaps are summarized, and CI governance/conformance checks pass.

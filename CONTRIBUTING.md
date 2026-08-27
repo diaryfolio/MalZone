@@ -7,9 +7,8 @@ changes. Before implementation:
 2. read the implementation conformance map and affected design/ADRs;
 3. update design, contracts, security, deployment, operations and tests in the same change set;
 4. run `make design-check` plus all affected implementation validation;
-5. complete the pull-request Design Sync Report and checklist.
+5. summarize material design impact, validation evidence, and known gaps for reviewers.
 
 Do not merge a major change without conformance and affected design updates. Do not claim security
 or maturity beyond executable evidence. A rendered manifest is not proof of guest, CNI, storage,
 artifact, identity, or cleanup isolation.
-

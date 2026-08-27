@@ -54,18 +54,10 @@
 - Known production gaps:
 - Reviewer/risk acceptance:
 
-## 8. Design Sync Report
+## 8. Completion evidence
 
-```text
-Design Sync Report
-- Change Classification: major
-- Design Docs Updated:
-- Contracts Updated:
-- Code/Deployment Areas Updated:
-- Architecture Delta:
-- Threat/Trust Boundary Delta:
-- Tests/Evidence:
-- Known Production Gaps:
-- Sync Status: PASS
-```
-
+- Changed design/contracts/implementation/deployment areas:
+- Architecture and trust-boundary delta:
+- Tests and enforcement evidence:
+- Known production gaps:
+- Automated design-sync gate result:

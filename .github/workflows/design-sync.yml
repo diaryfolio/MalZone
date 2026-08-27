@@ -25,9 +25,8 @@ jobs:
       - name: Validate design, governance, and contracts
         run: make design-check
 
-      - name: Validate pull-request Design Sync Report
+      - name: Validate changed-file design synchronization
         if: github.event_name == 'pull_request'
         env:
-          EVENT_PATH: ${{ github.event_path }}
           BASE_REF: origin/${{ github.base_ref }}
-        run: python3 scripts/check_design_sync.py --event "$EVENT_PATH" --base "$BASE_REF"
+        run: python3 scripts/check_design_sync.py --base "$BASE_REF"

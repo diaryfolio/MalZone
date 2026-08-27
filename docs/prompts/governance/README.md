@@ -9,7 +9,7 @@ flowchart LR
     Classify --> Impact["design + trust + ownership impact"]
     Impact --> Change["implementation and design in one change set"]
     Change --> Check["checklist + tests + PR gate"]
-    Check --> Report["Design Sync Report"]
+    Check --> Gate["automatic changed-file synchronization"]
 ```
 
 ## Files
@@ -25,6 +25,5 @@ flowchart LR
 2. Use the guardrail before code, contract, deployment, or policy work.
 3. For major changes, complete the template in the PR or review artifact.
 4. Update the conformance map and relevant design documents in the same change set.
-5. Run `make design-check` and complete the mandatory Design Sync Report.
-6. Do not merge if the checklist or report has a failed item.
-
+5. Run `make design-check`; CI derives design-sync requirements from the changed files.
+6. Do not merge if the checklist, automated gate, or required validation fails.

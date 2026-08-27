@@ -118,5 +118,5 @@ make design-check
 ```
 
 All human and AI-assisted contributions must follow [CLAUDE.md](CLAUDE.md), including change
-classification, synchronized conformance/design/contracts, executable evidence, and the mandatory
-Design Sync Report. `AGENTS.md` makes the same policy discoverable to coding agents.
+classification, synchronized conformance/design/contracts, executable evidence, and the automatic
+changed-file design-sync gate. `AGENTS.md` makes the same policy discoverable to coding agents.

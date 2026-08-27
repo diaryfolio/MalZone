@@ -34,9 +34,8 @@ Use this checklist for every PR that changes code, contracts, infrastructure, po
 
 ## Completion
 
-- [ ] Mandatory Design Sync Report is complete.
+- [ ] Material design impact, validation evidence, and known production gaps are summarized.
 - [ ] Known production gaps are explicit.
-- [ ] `Sync Status: PASS` is truthful.
+- [ ] The automatic changed-file design-sync gate passes.
 
 If any required box is unchecked, do not merge.
-

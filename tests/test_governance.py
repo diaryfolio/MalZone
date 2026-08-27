@@ -3,26 +3,10 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from scripts.check_design_sync import DesignSyncError, validate_report
+from scripts.check_design_sync import DesignSyncError, validate_changed_files
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-
-
-def report(classification: str = "minor") -> str:
-    return f"""
-## Design Sync Report
-- Change Classification: {classification}
-- Design Docs Updated: none; behavior unchanged
-- Contracts Updated: none
-- Code/Deployment Areas Updated: tests
-- Architecture Delta: none
-- Threat/Trust Boundary Delta: none
-- Tests/Evidence: make design-check
-- Known Production Gaps: none
-- Sync Status: PASS
-"""
-
 
 class GovernanceTests(unittest.TestCase):
     def test_governance_pack_and_agent_instructions_exist(self) -> None:
@@ -42,39 +26,37 @@ class GovernanceTests(unittest.TestCase):
         for relative in required:
             self.assertTrue((REPO_ROOT / relative).is_file(), relative)
 
-    def test_canonical_instructions_contain_required_report(self) -> None:
+    def test_canonical_instructions_describe_automatic_gate(self) -> None:
         instructions = (REPO_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
         for phrase in (
             "Mandatory design-sync workflow",
             "00-implementation-conformance.md",
-            "Threat/Trust Boundary Delta",
-            "Sync Status: <PASS|FAIL>",
+            "changed-file design-sync gate",
+            "pull-request description fields",
             "make design-check",
         ):
             self.assertIn(phrase, instructions)
 
-    def test_minor_report_can_pass_without_design_diff(self) -> None:
-        validate_report(report(), ["tests/test_example.py"])
+    def test_documentation_only_change_does_not_require_companion_updates(self) -> None:
+        validate_changed_files(["README.md", "docs/design/business/strategy.md"])
 
-    def test_major_report_requires_conformance_and_companion_design(self) -> None:
+    def test_sensitive_change_requires_conformance_and_companion_design(self) -> None:
         with self.assertRaisesRegex(DesignSyncError, "conformance"):
-            validate_report(report("major"), ["controller/reconciler.go"])
+            validate_changed_files(["controller/reconciler.go"])
         with self.assertRaisesRegex(DesignSyncError, "high-level design or ADR"):
-            validate_report(report("major"), [
+            validate_changed_files([
                 "controller/reconciler.go",
                 "docs/design/high-level/00-implementation-conformance.md",
             ])
-        validate_report(report("major"), [
+        validate_changed_files([
             "controller/reconciler.go",
             "docs/design/high-level/00-implementation-conformance.md",
             "docs/design/high-level/10-overall/02-runtime-topology-lifecycle.md",
         ])
 
-    def test_unresolved_or_failed_report_is_rejected(self) -> None:
-        with self.assertRaises(DesignSyncError):
-            validate_report(report().replace("minor", "<minor|major>", 1), [])
-        with self.assertRaisesRegex(DesignSyncError, "PASS"):
-            validate_report(report().replace("Sync Status: PASS", "Sync Status: FAIL"), [])
+    def test_contract_change_is_implementation_sensitive(self) -> None:
+        with self.assertRaisesRegex(DesignSyncError, "conformance"):
+            validate_changed_files(["contracts/schemas/event-v1.json"])
 
 
 if __name__ == "__main__":

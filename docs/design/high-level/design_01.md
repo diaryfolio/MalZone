@@ -181,16 +181,15 @@ flowchart LR
     Classify --> Impact["architecture + trust + ownership impact"]
     Impact --> Sync["design + contracts + implementation"]
     Sync --> Evidence["tests + negative security evidence"]
-    Evidence --> Gate["PR / CI design-sync gate"]
-    Gate --> Report["mandatory Design Sync Report"]
-    Report --> Conformance["honest implementation-conformance status"]
+    Evidence --> Gate["changed-file CI design-sync gate"]
+    Gate --> Conformance["honest implementation-conformance status"]
 ```
 
 ### Canonical governance assets
 
 | Asset | Purpose | Enforcement |
 |---|---|---|
-| [Canonical repository rules](../../../CLAUDE.md) | mandatory architecture, security, validation, documentation and completion rules for every human or AI-assisted change | requires change classification, synchronized design/contracts/tests and a Design Sync Report |
+| [Canonical repository rules](../../../CLAUDE.md) | mandatory architecture, security, validation, documentation and completion rules for every human or AI-assisted change | requires change classification, synchronized design/contracts/tests and automatic changed-file enforcement |
 | [Agent discovery rules](../../../AGENTS.md) | makes the canonical repository policy automatically discoverable to coding agents | directs every agent to `CLAUDE.md` and prohibits modifications to the reference `aiops-fabric` repository |
 | [Human contribution rules](../../../CONTRIBUTING.md) | concise contributor workflow for implementation and review | blocks unsupported maturity/security claims and points contributors to executable validation |
 | [Repository governance pack](../../prompts/governance/README.md) | major-change policy, reusable guardrail, reviewer checklist and change-record template | defines what must change together and when a change is not merge-ready |
@@ -198,9 +197,9 @@ flowchart LR
 | [Implementation conformance](00-implementation-conformance.md) | authoritative map of implemented, configuration-ready, designed and not-started capabilities | must change with every route, event, runtime edge, state owner, trust boundary, maturity or evidence change |
 | [Architecture decision records](../decisions/README.md) | preserves durable decisions and consequences instead of silently rewriting architecture history | significant decisions are added or superseded explicitly |
 | [Machine-readable contracts](../../../contracts/README.md) | versioned OpenAPI, CRD, event, profile, artifact, software and image boundaries | schemas/examples are validated and must agree with prose and runtime behavior |
-| [Pull-request template](../../../.github/pull_request_template.md) | requires the complete Design Sync Report and reviewer checklist | unresolved placeholders or `Sync Status: FAIL` are not merge-ready |
-| [Design-sync CI workflow](../../../.github/workflows/design-sync.yml) | runs governance, documentation, conformance and contract checks on pushes and pull requests | major PRs must update the conformance map and an affected high-level design or ADR |
-| [PR design-sync checker](../../../scripts/check_design_sync.py) | validates report fields, classification and changed design files | fails CI for incomplete reports or unsynchronized major changes |
+| [Pull-request template](../../../.github/pull_request_template.md) | prompts a concise summary, design impact and reviewer checklist without a fixed report schema | reviewers retain context without making PR-body formatting a merge dependency |
+| [Design-sync CI workflow](../../../.github/workflows/design-sync.yml) | runs governance, documentation, conformance, contract and changed-file checks on pushes and pull requests | implementation-sensitive PRs must update the conformance map and an affected high-level design or ADR |
+| [PR design-sync checker](../../../scripts/check_design_sync.py) | derives synchronization requirements from the actual changed files | fails CI for unsynchronized implementation, deployment, guest, operator, service or contract changes; it does not parse PR text |
 | [Automated alignment tests](../../../tests/test_design_alignment.py) | validates canonical documents, links, Mermaid blocks, maturity claims and implemented route coverage | `make design-check` is mandatory for every change |
 
 ### Mandatory change workflow
@@ -216,25 +215,20 @@ flowchart LR
 5. Prove positive behavior and relevant authorization, isolation, hostile-content, fault and cleanup
    denial behavior. Rendered manifests alone do not prove enforcement.
 6. Run `make design-check` and every implementation-specific validation target.
-7. Complete the mandatory Design Sync Report. Do not merge or claim completion unless its status is
-   `PASS` and known production gaps remain explicit.
+7. Summarize material design impact, validation evidence, and known gaps for review. Ensure the
+   automatic changed-file design-sync gate passes before merge.
 
-### Required completion report
+### Automated enforcement
 
-Every completed change reports:
+The gate does not inspect the pull-request description and has no mandatory report-field format.
+It examines the diff against the PR base. A change under an implementation-sensitive path such as
+`api/`, `controller/`, `contracts/`, `deploy/`, `guest/`, `operator/`, or `services/` must include:
 
-```text
-Design Sync Report
-- Change Classification: <minor|major>
-- Design Docs Updated: <list or none with reason>
-- Contracts Updated: <list or none>
-- Code/Deployment Areas Updated: <list or none>
-- Architecture Delta: <summary or none>
-- Threat/Trust Boundary Delta: <summary or none>
-- Tests/Evidence: <list>
-- Known Production Gaps: <list or none>
-- Sync Status: <PASS|FAIL>
-```
+1. an update to `docs/design/high-level/00-implementation-conformance.md`; and
+2. an affected high-level design document or non-index ADR.
+
+Normal review communication still records meaningful architecture, trust, evidence, and gap
+information, but wording or formatting that communication cannot make CI fail.
 
 This governance layer is itself part of the architecture. Removing, bypassing or weakening it is a
 major change and requires an explicit replacement with equivalent enforcement.

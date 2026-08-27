@@ -62,6 +62,5 @@ A major change is not ready unless:
 2. conformance and all affected design/contracts are updated in the same change set;
 3. the architecture and trust-boundary delta is explicit;
 4. tests/evidence and known production gaps are listed;
-5. the mandatory Design Sync Report says `Sync Status: PASS`;
-6. CI design/governance checks pass.
-
+5. the automated changed-file design-sync gate passes;
+6. all other CI design/governance checks pass.

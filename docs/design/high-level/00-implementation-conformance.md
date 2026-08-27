@@ -25,7 +25,7 @@ flowchart LR
 | Capability | Status | Current evidence | Promotion evidence required |
 |---|---|---|---|
 | Product and architecture definition | implemented | `docs/design/high-level/` | Keep all design links and checks passing |
-| Repository design-sync governance | implemented | `CLAUDE.md`, `AGENTS.md`, governance pack, PR template/gate and automated tests | Keep CI required and extend gates with each implementation language/toolchain |
+| Repository design-sync governance | implemented | `CLAUDE.md`, `AGENTS.md`, governance pack, reviewer-oriented PR template, automatic changed-file gate and automated tests | Keep CI required and extend synchronized path coverage with each implementation language/toolchain |
 | Software package/image recipe contracts | implemented | two JSON schemas, fictional examples and contract tests | Add compatibility tooling and generated types when service implementation starts |
 | Software catalog and image-build runtime | designed | catalog/build/promotion design and ADR | API, local mirror, resolver, isolated builder, promotion and negative tests |
 | Analysis REST/WebSocket API | designed | API contract in design | OpenAPI, implementation, unit/contract tests |
