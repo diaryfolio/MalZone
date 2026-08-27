@@ -26,7 +26,9 @@ flowchart LR
 | malware researcher | interact with a specimen and inspect raw evidence | bounded console, explicit network mode, auditable exports |
 | incident responder | compare an incident sample with observed indicators | immutable hashes, timestamps, provenance, reproducible profile |
 | platform operator | maintain templates, capacity, isolation, retention, and recovery | no routine access to sample contents; safe operational tooling |
+| image curator/project admin | select exact software versions and build approved client-specific Windows images | immutable manifests, licensing, isolated build, split promotion |
 | security administrator | approve profiles, access, egress, and artifact handling | deny-by-default policy and complete audit history |
+| automation/integration owner | submit samples, extract reports, and connect local workflows | scoped machine identity, signed events, disclosure policy |
 
 ## Success criteria
 
@@ -64,6 +66,10 @@ flowchart LR
   claim. Downloads use safe names, attachment disposition, authorization, and audit.
 - **Replace through contracts:** storage, queue, identity, Windows collectors, and egress providers
   can change behind versioned APIs and conformance suites.
+- **API first:** the UI, CLI, automation, exports, and workflow adapters use the same committed
+  versioned contracts; no capability exists only through privileged UI/database access.
+- **Immutable image composition:** client software choices resolve to exact reviewed package pins
+  and a promoted image; analysis sessions never fetch/install “latest” software.
 
 ## Functional requirements
 
@@ -81,6 +87,12 @@ flowchart LR
 7. Seal a manifest, hash every artifact, record collector gaps, and make safe projections queryable.
 8. Delete or revoke all session resources and expose a terminal outcome only after the cleanup
    inventory is empty.
+9. Let authorized clients browse reviewed software/versions, compose an immutable Windows recipe,
+   build it in an isolated local zone, and select only promoted images for analysis.
+10. Expose submission, status, events, reports, IOCs, evidence metadata, exports, and administration
+    through versioned APIs with local OIDC SSO and scoped machine clients.
+11. Emit safe operational logs/metrics/traces and signed metadata webhooks so local monitoring,
+    SIEM, SOAR, TIP, and case workflows can integrate without direct state-store access.
 
 ## Interactive-product capability map
 
@@ -90,8 +102,8 @@ flowchart LR
 | live behavior | process tree, timeline, command lines, file/registry/network/DNS events | synchronization/module events, richer causal graph |
 | detections | local YARA and Suricata, signed rule versions, analyst verdict | local ATT&CK mapping, family/config extractors, rule-authoring workflow |
 | evidence | screenshots, PCAP, event stream, dropped files, logs, hashes | process/full-memory dumps and advanced static inspection |
-| automation | file submission, profile presets, autorun and scripted safe interactions | transparent automated-interactivity playbooks |
-| reporting | JSON and human-readable local report, IOC export | STIX/MISP/SIEM integrations and comparison across sessions |
+| automation | file submission, profile/software presets, API clients, autorun and scripted safe interactions | transparent automated-interactivity playbooks |
+| reporting | JSON and human-readable local report, IOC/export API | STIX/MISP/SIEM/SOAR integrations and comparison across sessions |
 | privacy/control | private projects, local storage, local identity, offline execution | multi-cluster cells and policy-controlled local threat-intel sharing |
 
 Clipboard is disabled by default and, when enabled, text-only with size limits and a visible audit

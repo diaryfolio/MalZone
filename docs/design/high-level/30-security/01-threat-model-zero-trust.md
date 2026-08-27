@@ -27,7 +27,11 @@ flowchart LR
 - Kubernetes API, etcd, node/kubelet credentials, container runtime, hypervisor, and host kernel;
 - management services, signing keys, session CA, OIDC/secrets systems, databases, NATS, object store;
 - golden Windows images, build pipeline, VirtIO/agent/tool/rule packages, and promotion records;
+- software catalog, installer mirror, image recipes, licensing/activation profiles, builder nodes,
+  candidate snapshots, SBOM/provenance and promotion signatures;
 - samples, artifacts, reports, analyst identities, project membership, comments, and audit trails;
+- OIDC sessions, machine clients, OpenAPI contracts, exports, webhook secrets/deliveries, adapter
+  credentials, monitoring and audit pipelines;
 - private/internal network addresses, public-IP reputation, bandwidth, and third-party systems;
 - isolation between concurrent analyses and the integrity/availability of lifecycle cleanup.
 
@@ -40,6 +44,7 @@ flowchart LR
 | sample forges agent telemetry, time, filenames, hashes claimed before server verification | yes |
 | sample scans/attacks both guest NICs and floods protocols | yes |
 | malicious authorized analyst submits pathological content or abuses console/API | yes |
+| project administrator submits a malicious or compromised “software installer” | yes |
 | stolen ordinary analyst token | yes; bounded by project RBAC, expiry, quotas, and audit |
 | malicious cluster administrator | not fully contained; mitigate with split duties and external audit |
 | KVM/QEMU/kernel/CNI/CSI escape | possible residual risk; dedicated zone and rebuild response required |
@@ -57,6 +62,8 @@ flowchart LR
 | guest → gateway | no trust; network placement only | per-session L2, firewall, capture, mode policy |
 | gateway → Internet | explicit analysis policy and separate egress zone | deny reserved/internal/metadata, DNS rebinding checks, rate/byte/time caps |
 | API/UI → artifact | project permission, disposition policy, optional reauth/reason | attachment download, isolated preview origin, scanner/decompression bounds |
+| image-build agent → build relay | one-use build identity, exact recipe/artifact scope | separate builder network/nodes, no analysis or pod network |
+| webhook/adapter → external system | connector-owned identity, disclosure policy and signed delivery | isolated adapter namespace, destination egress allow-list |
 
 ## Threat/control matrix
 
@@ -74,11 +81,14 @@ flowchart LR
 | malicious artifact attacks UI/operator | content disposition, safe filename, isolated preview workers/origin, no active rendering, parser sandbox | polyglot/archive bomb/XSS/image/document tests |
 | forged/missing telemetry | independent gateway capture, server ingest times, sequence gaps, collector health, signed platform manifest | agent-kill/time-skew/drop/replay tests show degraded report |
 | golden image poisoned | offline reproducible build, signed inputs/manifests, split promotion, protected snapshot, canary | manifest verification and unauthorized mutation denial |
+| malicious installer escapes build boundary | no-pod-network builder VM on dedicated zone, local mirror, scoped relay, cleanup/rebuild | builder → cluster/internal/analysis/cross-project paths fail; zero residue |
+| license/build secret leaks into image | opaque local activation broker, no manifest secret, pre-promotion residue scan | disk/registry/log/pagefile/crash/build-output secret scans |
 | stale clone/shared state | immutable source, unique writable clone and session identity, no pooling after run | pre/post residue and cross-run marker tests |
 | cleanup abandonment | finalizer, durable inventory, independent reaper, residue scanner, break-glass audit | crash at every phase then convergence test |
 | console hijack/CSRF | one-use user-bound ticket, strict Origin, short expiry, single controller, audit, rate limit | replay/cross-user/cross-project/origin tests |
 | control-plane DoS | quotas, admission capacity, separate lifecycle/telemetry resources, backpressure, priority classes | event/artifact flood does not block stop/cleanup |
 | dependency/image compromise | pinned hashes/digests, SBOM, signing/provenance, scanning, admission | CI verification and unsigned-image denial |
+| SSO/API/workflow data exfiltration | exact issuer/audience/scopes/project policy, metadata-only default, adapter-owned credentials/egress | cross-project/scope, SSRF/rebinding, disclosure/redaction and log-leak tests |
 
 ## Identity and authorization
 
@@ -93,6 +103,7 @@ Initial roles are:
 - `analyst`: upload, create/stop/interact with analyses, request ordinary downloads;
 - `researcher`: request high-risk artifacts/memory and controlled-network profiles;
 - `project-admin`: membership, presets, project retention/quota within policy;
+- `image-curator`: package review, recipe/build approval and image promotion under split duty;
 - `platform-operator`: capacity/templates/runtime without default sample-content access;
 - `security-admin`: profile/egress/rule/retention policy and audited break glass;
 - `auditor`: read immutable audit and promotion evidence.
@@ -112,6 +123,12 @@ Object, NATS, database, OIDC, signing, and egress credentials are held only by t
 workloads. Secrets are not present in images, CR specs/status, annotations, environment dumps,
 command lines, logs, traces, reports, or support bundles. Rotation supports overlap and revocation;
 analysis credentials are revoked before child deletion and again by the reaper.
+
+Build bootstrap identities follow the same one-use pattern but use a distinct issuer/audience and
+cannot access analysis relay subjects/prefixes. License/activation secrets resolve only inside a
+local build-only broker and are never returned through catalog/build APIs. Webhook and adapter
+credentials are held only by their connector workload; core services receive neither secret nor
+vendor SDK.
 
 ## Artifact and sample safety
 
@@ -198,6 +215,12 @@ The production gate executes these from the relevant real source, not only from 
    traversal, malformed PCAP/image/event text: isolated or rejected without control-plane impact.
 8. Operator/relay/agent/worker crash at every lifecycle phase: execution stops and all resources,
    networks, disks, grants, identities, and temporary objects converge to deletion.
+9. Builder → cluster/API/data/analysis/corporate/Internet/other-project paths; malicious installer,
+   hook, reboot loop, secret residue, platform-bundle downgrade and unapproved candidate: denied or
+   quarantined with complete builder cleanup.
+10. OIDC issuer/audience/algorithm/scope/project crossing, machine-token overreach, report/export
+    authorization, webhook SSRF/rebinding/redirect/signature/replay, and adapter direct-state access:
+    denied and audited without leaking payloads into logs/metrics/traces.
 
 ## Residual risks and acceptance
 

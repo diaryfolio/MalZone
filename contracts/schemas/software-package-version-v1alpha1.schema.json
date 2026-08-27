@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.malzone.local/software-package-version-v1alpha1.schema.json",
+  "title": "MalZone SoftwarePackageVersion v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {"const": "malzone.io/v1alpha1"},
+    "kind": {"const": "SoftwarePackageVersion"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageId", "displayName", "version", "revision", "visibility"],
+      "properties": {
+        "packageId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "displayName": {"type": "string", "minLength": 1, "maxLength": 160},
+        "version": {"$ref": "#/$defs/exactVersion"},
+        "revision": {"type": "integer", "minimum": 1},
+        "visibility": {"enum": ["curated", "project-private"]},
+        "projectId": {"type": "string", "minLength": 10, "maxLength": 64},
+        "labels": {
+          "type": "object",
+          "propertyNames": {"pattern": "^[a-z][a-z0-9.-]{0,62}$"},
+          "additionalProperties": {"type": "string", "maxLength": 128},
+          "maxProperties": 32
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"visibility": {"const": "project-private"}}},
+          "then": {"required": ["projectId"]},
+          "else": {"not": {"required": ["projectId"]}}
+        }
+      ]
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "publisher",
+        "architectures",
+        "supportedWindows",
+        "source",
+        "installer",
+        "detection",
+        "license",
+        "securityReview"
+      ],
+      "properties": {
+        "publisher": {"type": "string", "minLength": 1, "maxLength": 160},
+        "description": {"type": "string", "maxLength": 2000},
+        "homepage": {"type": "string", "format": "uri", "maxLength": 500},
+        "architectures": {
+          "type": "array",
+          "items": {"enum": ["x86", "x64", "arm64"]},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "supportedWindows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["product", "buildMin"],
+            "properties": {
+              "product": {"enum": ["windows-10", "windows-11", "windows-server-2022", "windows-server-2025"]},
+              "edition": {"type": "string", "maxLength": 80},
+              "buildMin": {"type": "integer", "minimum": 1},
+              "buildMax": {"type": "integer", "minimum": 1}
+            }
+          }
+        },
+        "source": {"$ref": "#/$defs/artifactReference"},
+        "auxiliaryArtifacts": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/artifactReference"},
+          "maxItems": 16
+        },
+        "installer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "arguments", "context", "timeoutSeconds", "successExitCodes", "reboot"],
+          "properties": {
+            "type": {"enum": ["msi", "exe", "msix", "zip", "script-bundle"]},
+            "arguments": {
+              "type": "array",
+              "items": {"type": "string", "maxLength": 500},
+              "maxItems": 64
+            },
+            "context": {"enum": ["system", "analysis-user"]},
+            "timeoutSeconds": {"type": "integer", "minimum": 1, "maximum": 7200},
+            "successExitCodes": {
+              "type": "array",
+              "items": {"type": "integer", "minimum": -2147483648, "maximum": 4294967295},
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true
+            },
+            "reboot": {"enum": ["none", "allowed", "required"]},
+            "installLocation": {"type": "string", "maxLength": 260},
+            "hooks": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "preInstall": {"$ref": "#/$defs/scriptBundleReference"},
+                "postInstall": {"$ref": "#/$defs/scriptBundleReference"}
+              }
+            }
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/packagePin"},
+          "maxItems": 64
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/packagePin"},
+          "maxItems": 64
+        },
+        "detection": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "target"],
+            "properties": {
+              "type": {"enum": ["file", "registry", "msi-product", "service"]},
+              "target": {"type": "string", "minLength": 1, "maxLength": 500},
+              "expected": {"type": "string", "maxLength": 500}
+            }
+          }
+        },
+        "validationSuites": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[a-z][a-z0-9.-]{0,127}$"},
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "license": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["category", "redistributionAllowed", "acceptanceRequired", "activation"],
+          "properties": {
+            "category": {"enum": ["open-source", "freeware", "commercial", "bring-your-own", "restricted"]},
+            "redistributionAllowed": {"type": "boolean"},
+            "acceptanceRequired": {"type": "boolean"},
+            "licenseReference": {"type": "string", "maxLength": 500},
+            "activation": {"enum": ["none", "build-time-local", "manual-preactivated"]},
+            "activationProfileRef": {"type": "string", "pattern": "^[a-z][a-z0-9.-]{0,127}$"}
+          },
+          "allOf": [
+            {
+              "if": {"properties": {"activation": {"const": "build-time-local"}}},
+              "then": {"required": ["activationProfileRef"]}
+            }
+          ]
+        },
+        "securityReview": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["risk", "requiresAdmin", "addsService", "addsKernelDriver"],
+          "properties": {
+            "risk": {"enum": ["standard", "elevated", "kernel-driver"]},
+            "requiresAdmin": {"type": "boolean"},
+            "addsService": {"type": "boolean"},
+            "addsKernelDriver": {"type": "boolean"},
+            "requestedExceptions": {
+              "type": "array",
+              "items": {"type": "string", "maxLength": 300},
+              "maxItems": 32,
+              "uniqueItems": true
+            },
+            "reviewReference": {"type": "string", "maxLength": 300}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^(?![Ll][Aa][Tt][Ee][Ss][Tt]$)(?![Cc][Uu][Rr][Rr][Ee][Nn][Tt]$)(?![Ss][Tt][Aa][Bb][Ll][Ee]$)(?!.*[<>=*^~]).+$"
+    },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "sha256", "sizeBytes", "fileName", "mediaType", "authenticode"],
+      "properties": {
+        "artifactId": {"type": "string", "minLength": 10, "maxLength": 128},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "sizeBytes": {"type": "integer", "minimum": 1, "maximum": 21474836480},
+        "fileName": {"type": "string", "minLength": 1, "maxLength": 260},
+        "mediaType": {"type": "string", "minLength": 1, "maxLength": 160},
+        "authenticode": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["required", "allowedSubjects", "allowedThumbprints"],
+          "properties": {
+            "required": {"type": "boolean"},
+            "allowedSubjects": {
+              "type": "array",
+              "items": {"type": "string", "maxLength": 300},
+              "maxItems": 16,
+              "uniqueItems": true
+            },
+            "allowedThumbprints": {
+              "type": "array",
+              "items": {"type": "string", "pattern": "^[A-Fa-f0-9]{40,128}$"},
+              "maxItems": 32,
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    },
+    "scriptBundleReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "sha256", "interpreter", "timeoutSeconds"],
+      "properties": {
+        "artifactId": {"type": "string", "minLength": 10, "maxLength": 128},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "interpreter": {"enum": ["powershell", "cmd"]},
+        "timeoutSeconds": {"type": "integer", "minimum": 1, "maximum": 3600}
+      }
+    },
+    "packagePin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageId", "version", "revision"],
+      "properties": {
+        "packageId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 128},
+        "version": {"$ref": "#/$defs/exactVersion"},
+        "revision": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

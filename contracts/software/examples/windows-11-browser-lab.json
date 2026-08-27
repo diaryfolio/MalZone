@@ -1,0 +1,57 @@
+{
+  "apiVersion": "malzone.io/v1alpha1",
+  "kind": "WindowsImageRecipe",
+  "metadata": {
+    "recipeId": "windows-11-browser-lab",
+    "displayName": "Windows 11 Browser Lab",
+    "revision": 1,
+    "visibility": "curated",
+    "description": "Non-production example showing an exact package selection."
+  },
+  "spec": {
+    "baseImage": {
+      "imageId": "windows-11-enterprise-x64",
+      "version": "2026.08.1",
+      "digest": "2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    "platformBundle": {
+      "version": "0.1.0",
+      "digest": "3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    "packages": [
+      {
+        "packageId": "example-browser",
+        "version": "1.0.0",
+        "revision": 1,
+        "settings": {
+          "disableAutoUpdate": true,
+          "suppressFirstRun": true
+        }
+      }
+    ],
+    "osSettings": {
+      "locale": "en-GB",
+      "uiLanguage": "en-GB",
+      "timezone": "GMT Standard Time",
+      "keyboardLayouts": ["0809:00000809"],
+      "defaultBrowserPackageId": "example-browser"
+    },
+    "analysisUser": {
+      "privilege": "local-admin",
+      "autoLogon": true
+    },
+    "buildPolicy": {
+      "network": "offline-mirror-only",
+      "updates": "pinned-in-base-image",
+      "sysprep": "preserve-profile",
+      "failOnUnexpectedReboot": true,
+      "maxDurationSeconds": 7200
+    },
+    "validationSuites": [
+      "malzone-platform-health-v1",
+      "browser-launch-offline-v1",
+      "guest-no-secret-residue-v1"
+    ]
+  }
+}
+

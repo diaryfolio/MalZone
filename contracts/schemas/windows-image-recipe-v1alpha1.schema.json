@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.malzone.local/windows-image-recipe-v1alpha1.schema.json",
+  "title": "MalZone WindowsImageRecipe v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {"const": "malzone.io/v1alpha1"},
+    "kind": {"const": "WindowsImageRecipe"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recipeId", "displayName", "revision", "visibility"],
+      "properties": {
+        "recipeId": {"type": "string", "pattern": "^[a-z][a-z0-9.-]{0,127}$"},
+        "displayName": {"type": "string", "minLength": 1, "maxLength": 160},
+        "revision": {"type": "integer", "minimum": 1},
+        "visibility": {"enum": ["curated", "project-private"]},
+        "projectId": {"type": "string", "minLength": 10, "maxLength": 64},
+        "description": {"type": "string", "maxLength": 2000}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"visibility": {"const": "project-private"}}},
+          "then": {"required": ["projectId"]},
+          "else": {"not": {"required": ["projectId"]}}
+        }
+      ]
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baseImage",
+        "platformBundle",
+        "packages",
+        "osSettings",
+        "analysisUser",
+        "buildPolicy",
+        "validationSuites"
+      ],
+      "properties": {
+        "baseImage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["imageId", "version", "digest"],
+          "properties": {
+            "imageId": {"type": "string", "pattern": "^[a-z][a-z0-9.-]{0,127}$"},
+            "version": {"$ref": "#/$defs/exactVersion"},
+            "digest": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "platformBundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["version", "digest"],
+          "properties": {
+            "version": {"$ref": "#/$defs/exactVersion"},
+            "digest": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {"$ref": "#/$defs/packagePin"},
+              {
+                "type": "object",
+                "properties": {
+                  "settings": {
+                    "type": "object",
+                    "propertyNames": {"pattern": "^[a-zA-Z][a-zA-Z0-9.-]{0,63}$"},
+                    "additionalProperties": {"type": ["string", "boolean", "integer"], "maxLength": 500},
+                    "maxProperties": 32
+                  },
+                  "licenseProfileRef": {"type": "string", "pattern": "^[a-z][a-z0-9.-]{0,127}$"}
+                }
+              }
+            ]
+          },
+          "maxItems": 128
+        },
+        "osSettings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["locale", "uiLanguage", "timezone", "keyboardLayouts"],
+          "properties": {
+            "locale": {"type": "string", "pattern": "^[a-z]{2,3}-[A-Z]{2}$"},
+            "uiLanguage": {"type": "string", "pattern": "^[a-z]{2,3}-[A-Z]{2}$"},
+            "timezone": {"type": "string", "minLength": 1, "maxLength": 120},
+            "keyboardLayouts": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1, "maxLength": 40},
+              "minItems": 1,
+              "maxItems": 8,
+              "uniqueItems": true
+            },
+            "defaultBrowserPackageId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"}
+          }
+        },
+        "analysisUser": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["privilege", "autoLogon"],
+          "properties": {
+            "privilege": {"enum": ["standard-user", "local-admin"]},
+            "autoLogon": {"type": "boolean"}
+          }
+        },
+        "buildPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["network", "updates", "sysprep", "failOnUnexpectedReboot", "maxDurationSeconds"],
+          "properties": {
+            "network": {"const": "offline-mirror-only"},
+            "updates": {"const": "pinned-in-base-image"},
+            "sysprep": {"enum": ["generalize", "preserve-profile"]},
+            "failOnUnexpectedReboot": {"type": "boolean"},
+            "maxDurationSeconds": {"type": "integer", "minimum": 60, "maximum": 43200}
+          }
+        },
+        "validationSuites": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[a-z][a-z0-9.-]{0,127}$"},
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^(?![Ll][Aa][Tt][Ee][Ss][Tt]$)(?![Cc][Uu][Rr][Rr][Ee][Nn][Tt]$)(?![Ss][Tt][Aa][Bb][Ll][Ee]$)(?!.*[<>=*^~]).+$"
+    },
+    "packagePin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageId", "version", "revision"],
+      "properties": {
+        "packageId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 128},
+        "version": {"$ref": "#/$defs/exactVersion"},
+        "revision": {"type": "integer", "minimum": 1},
+        "settings": {
+          "type": "object",
+          "propertyNames": {"pattern": "^[a-zA-Z][a-zA-Z0-9.-]{0,63}$"},
+          "additionalProperties": {"type": ["string", "boolean", "integer"]},
+          "maxProperties": 32
+        },
+        "licenseProfileRef": {"type": "string", "pattern": "^[a-z][a-z0-9.-]{0,127}$"}
+      }
+    }
+  }
+}

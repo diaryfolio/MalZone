@@ -23,6 +23,11 @@ flowchart LR
     Rule["Detection workers<br/>YARA + Suricata"] --> Bus
     Report["Report worker"] --> PG
     Report --> ObjectStore
+    Catalog["Software catalog / recipe resolver"] --> Build["Isolated image-build controller"]
+    Build --> KubeVirt
+    Build --> ObjectStore
+    Report --> Export["Report/export API"]
+    Bus --> Webhook["Webhook / workflow adapters"]
 ```
 
 ## Responsibilities
@@ -41,6 +46,11 @@ flowchart LR
 | detection workers | versioned local YARA/Suricata/behavior rules and matches | blocking lifecycle unless profile explicitly promotes a policy rule |
 | artifact service | quarantine, hashing, grants, manifests, retention, controlled downloads | trusting extension/MIME; rendering in the main API/UI origin |
 | report worker | build deterministic JSON and isolated HTML/PDF reports | network access or execution of artifact content |
+| software catalog/recipe resolver | exact package versions, dependency/conflict/license policy, immutable resolved recipes | installer execution, mutable downloads, secret storage in manifests |
+| image-build controller/relay | disposable offline builder VM, package delivery, validation, provenance, candidate cleanup | analysis samples, public Internet, automatic promotion |
+| image promotion service | split approval, signed provenance, profile publication/revocation | modifying images or bypassing validation |
+| report/export service | canonical report API, asynchronous bounded exports and controlled downloads | UI-only report behavior or active-content rendering |
+| webhook/integration adapters | signed metadata events, provider translation, retries/dead letter, connector credentials | direct DB/NATS/S3/Kubernetes/VM access by external workflows |
 
 ## Technology baseline
 
@@ -62,6 +72,8 @@ capabilities rather than claiming that arbitrary current releases interoperate.
 | identity | local or enterprise OIDC; Keycloak is one self-hosted option | standards-based SSO without a cloud dependency |
 | policy | Kubernetes admission/RBAC plus a local policy engine when required | fail-closed profile/egress/template decisions and auditable rules |
 | observability | Prometheus/OpenMetrics, OpenTelemetry, JSON logs, Grafana | vendor-neutral and fully local operation |
+| API and integration | OpenAPI 3.1, resumable WebSocket, signed webhooks, OAuth2/OIDC | UI and automation share stable contracts without direct state-store access |
+| image composition | JSON Schema manifests, local immutable package mirror, isolated KubeVirt builder VMs | reproducible client-selectable software without analysis-time install |
 | detections | YARA/YARA-X-compatible scanner, Suricata, signed local behavior rules | familiar defensive rule formats and offline rule operation |
 | network simulation | dedicated local gateway using INetSim-compatible services and controlled DNS/HTTP/TLS components | deterministic offline responses without exposing infrastructure |
 
@@ -177,7 +189,9 @@ MalZone/
 ├── contracts/
 │   ├── crd/                     # generated and source CRD types
 │   ├── openapi/                 # public/internal API
-│   └── events/                  # envelope and event JSON schemas
+│   ├── events/                  # envelope and event JSON schemas
+│   ├── schemas/                 # package, image, profile and artifact schemas
+│   └── software/                # catalog contract examples/guidance
 ├── internal/                    # shared Go packages; no cross-service DB access
 ├── migrations/                  # PostgreSQL migrations by owning service
 ├── deploy/
@@ -189,7 +203,9 @@ MalZone/
 ├── vm/
 │   ├── packer/                  # reproducible image pipeline
 │   ├── scripts/                 # Windows provisioning scripts
-│   └── manifests/               # signed image/tool manifests
+│   ├── catalog/                 # curated package manifests; no installer binaries
+│   └── manifests/               # signed image/tool/provenance manifests
+├── integrations/                # webhook/export/SIEM/SOAR/TIP adapter boundaries
 ├── detections/                  # schemas and development-only rules
 ├── docs/
 │   ├── design/

@@ -22,12 +22,18 @@ flowchart TB
     end
     subgraph MgmtWorkers["management worker pool"]
       API["edge/API/operator/projectors"]
+      BuildControl["catalog / build / promotion control"]
+      Integrations["webhook / workflow adapters"]
       Data["PostgreSQL / NATS / object gateway"]
     end
     subgraph AnalysisWorkers["tainted bare-metal analysis worker pool"]
       VMI["Windows VMI / virt-launcher"]
       Relay["session relay"]
       NetGW["disposable Linux gateway VM"]
+    end
+    subgraph BuilderWorkers["separate tainted builder worker pool"]
+      Builder["disposable Windows builder VMI"]
+      BuildRelay["per-build relay"]
     end
     subgraph SandboxNetwork["independent sandbox network zone"]
       Sim["DNS/HTTP simulation"]
@@ -36,6 +42,10 @@ flowchart TB
 
     API --> KAPI
     API --> Data
+    BuildControl --> Builder
+    Builder -->|"build-only secondary network"| BuildRelay
+    BuildRelay --> Data
+    Integrations -->|"approved local endpoints"| LocalTools["SIEM / SOAR / TIP"]
     VMI -->|"management secondary network"| Relay
     VMI -->|"detonation secondary network"| NetGW
     NetGW --> Sim
@@ -55,6 +65,8 @@ these node-level paths are not exposed to guest secondary networks.
 | `malzone-system` | API, operator, admission, dispatch, event/report services | no sample execution; default-deny network policy |
 | `malzone-data` | optional in-cluster PostgreSQL, NATS, object gateway | production may bind external local HA services |
 | `malzone-analysis` | VMIs, session relays, gateways, temporary PVCs/NADs | restricted users; controller-managed only; strict quotas |
+| `malzone-image-build` | disposable builder VMIs/relays, temporary disks/networks | separate tainted builder nodes; no samples or analysis networks |
+| `malzone-integrations` | webhook dispatcher and optional SIEM/SOAR/TIP adapters | connector-specific identity/egress; no direct data-store or Kubernetes access |
 | `malzone-observability` | Prometheus, collectors, Grafana, alerting | payload-free telemetry; separate admin access |
 
 Each MalZone pod workload has a unique service account. `automountServiceAccountToken: false` is set
@@ -228,6 +240,32 @@ administrator access. Node firmware, kernel, QEMU/libvirt/KubeVirt, CNI, and CSI
 accelerated security window. A suspected escape quarantines and rebuilds the node; rescheduling new
 work there is prohibited until attested clean.
 
+## Image-build placement
+
+Customer and vendor installers execute only in disposable Windows builder VMIs on a dedicated,
+tainted builder node pool or separate build cluster. Builder VMIs have no pod network, analysis
+network, corporate route, or public Internet. A per-build relay brokers exact hash-bound reads from
+the local installer mirror and candidate/provenance writes. Activation, when supported, uses a
+separate local build-only broker. Builder credentials, networks, writable disks, and relays are
+inventoried and cleaned with finalizer/reaper semantics equivalent to analyses.
+
+Golden base storage, candidate storage, and promoted snapshot storage use separate classes/policies.
+Only the promotion service can make a tested candidate selectable; image builders cannot mutate
+approved snapshots or analysis profiles. Builder nodes never host active malware-analysis VMIs.
+
+## API, SSO, observability, and integrations
+
+Ingress exposes only the versioned public API/UI and console proxy. OIDC, API, metrics, webhooks,
+and adapter traffic use distinct Services, service accounts, NetworkPolicies, certificates, and
+audiences. `/metrics` and internal readiness/dependency detail remain management-only. The local
+observability collector receives structured logs/OpenMetrics/OTLP-compatible telemetry but cannot
+read evidence buckets or application databases.
+
+Integration adapters run in `malzone-integrations`, own only their provider credentials and
+delivery checkpoints, and receive safe events/reports through public/internal contracts. Egress is
+allow-listed per connector. Air-gapped profiles include no public adapter egress and serve all UI
+assets, OIDC, monitoring, reporting, and exports locally.
+
 ## Installation order
 
 1. Validate dedicated cluster/node topology, storage snapshot/clone behavior, CNI secondary-network
@@ -238,10 +276,13 @@ work there is prohibited until attested clean.
    environment-owned local services.
 4. Apply namespaces, Pod Security admission, quotas, default-deny network policy, admission policy,
    service accounts, and RBAC.
-5. Install MalZone management services with no approved golden image yet.
-6. Build, verify, sign, import, snapshot, and promote one Windows profile.
-7. Run functional canary, then all prohibited-path network tests from a disposable guest.
-8. Enable analyst access only after cleanup, artifact, backup, and emergency-stop drills pass.
+5. Install MalZone management, local OIDC/observability, catalog/mirror, and integration boundaries
+   with no approved golden image or external connector yet.
+6. Build, verify, sign, import, snapshot, and promote one Windows profile from exact manifests.
+7. Run API/SSO/export canaries and functional analysis canary, then all prohibited-path network
+   tests from disposable guest, builder, relay, gateway, and adapter sources.
+8. Enable analyst/integration access only after cleanup, artifact, backup, webhook, and emergency-
+   stop drills pass.
 
 ## Support and compatibility matrix
 

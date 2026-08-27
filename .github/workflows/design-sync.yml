@@ -1,0 +1,33 @@
+name: Design sync
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  design-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Validate design, governance, and contracts
+        run: make design-check
+
+      - name: Validate pull-request Design Sync Report
+        if: github.event_name == 'pull_request'
+        env:
+          EVENT_PATH: ${{ github.event_path }}
+          BASE_REF: origin/${{ github.base_ref }}
+        run: python3 scripts/check_design_sync.py --event "$EVENT_PATH" --base "$BASE_REF"

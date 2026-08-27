@@ -8,10 +8,12 @@ functionality.
 flowchart LR
     Index["Architecture index<br/>decision and boundaries"] --> Truth["Implementation conformance<br/>what actually exists"]
     Truth --> Overall["Overall design<br/>flows, contracts, ownership"]
+    Truth --> Images["Software catalog<br/>immutable image composition"]
+    Truth --> Integrations["API / SSO / observability<br/>workflow integrations"]
     Truth --> Deploy["Kubernetes and KubeVirt"]
     Truth --> Security["Threat model and controls"]
     Truth --> Operations["Day-2 operations"]
-    Overall & Deploy & Security & Operations --> Roadmap["Roadmap<br/>evidence-based promotion gates"]
+    Overall & Images & Integrations & Deploy & Security & Operations --> Roadmap["Roadmap<br/>evidence-based promotion gates"]
 ```
 
 ## Design set
@@ -22,11 +24,14 @@ flowchart LR
 4. [Runtime topology and analysis lifecycle](10-overall/02-runtime-topology-lifecycle.md)
 5. [Contracts, APIs, and data ownership](10-overall/03-contracts-data.md)
 6. [Components and technology decisions](10-overall/04-components-technology.md)
-7. [Kubernetes and KubeVirt deployment](20-deployment/01-kubernetes-kubevirt.md)
-8. [Threat model and zero-trust controls](30-security/01-threat-model-zero-trust.md)
-9. [Day-2 operations and SRE](40-operations/01-day2-sre.md)
-10. [Delivery roadmap and acceptance gates](50-roadmap/01-delivery-roadmap.md)
-11. [Architecture decision log](../decisions/README.md)
+7. [Software catalog and Windows image composition](10-overall/05-software-catalog-image-composition.md)
+8. [API, identity, observability, and workflow integrations](10-overall/06-api-identity-observability-integrations.md)
+9. [Kubernetes and KubeVirt deployment](20-deployment/01-kubernetes-kubevirt.md)
+10. [Threat model and zero-trust controls](30-security/01-threat-model-zero-trust.md)
+11. [Day-2 operations and SRE](40-operations/01-day2-sre.md)
+12. [Delivery roadmap and acceptance gates](50-roadmap/01-delivery-roadmap.md)
+13. [Architecture decision log](../decisions/README.md)
+14. [Repository design-sync governance](../../prompts/governance/README.md)
 
 ## Reading rules
 
@@ -38,4 +43,3 @@ flowchart LR
   lifecycle behavior, but cannot prove host, network, or failure-domain isolation.
 - The Windows guest and all guest output are hostile. Nothing received from an analysis VM is
   trusted because it is signed, well-formed, or produced by the MalZone agent.
-

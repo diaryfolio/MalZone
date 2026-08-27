@@ -1,0 +1,68 @@
+{
+  "apiVersion": "malzone.io/v1alpha1",
+  "kind": "SoftwarePackageVersion",
+  "metadata": {
+    "packageId": "example-browser",
+    "displayName": "Example Browser",
+    "version": "1.0.0",
+    "revision": 1,
+    "visibility": "curated",
+    "labels": {
+      "category": "browser"
+    }
+  },
+  "spec": {
+    "publisher": "Example Publisher",
+    "description": "Non-production example used to document the package contract.",
+    "architectures": ["x64"],
+    "supportedWindows": [
+      {
+        "product": "windows-11",
+        "buildMin": 22621
+      }
+    ],
+    "source": {
+      "artifactId": "01JEXAMPLEINSTALLER0000000000",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "sizeBytes": 104857600,
+      "fileName": "example-browser-1.0.0-x64.msi",
+      "mediaType": "application/x-msi",
+      "authenticode": {
+        "required": true,
+        "allowedSubjects": ["CN=Example Publisher"],
+        "allowedThumbprints": ["AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"]
+      }
+    },
+    "installer": {
+      "type": "msi",
+      "arguments": ["/qn", "/norestart"],
+      "context": "system",
+      "timeoutSeconds": 900,
+      "successExitCodes": [0, 3010],
+      "reboot": "allowed"
+    },
+    "detection": [
+      {
+        "type": "file",
+        "target": "C:\\Program Files\\Example Browser\\browser.exe"
+      }
+    ],
+    "validationSuites": ["browser-launch-offline-v1"],
+    "license": {
+      "category": "freeware",
+      "redistributionAllowed": false,
+      "acceptanceRequired": true,
+      "licenseReference": "catalog-license/example-browser/1.0.0",
+      "activation": "none"
+    },
+    "securityReview": {
+      "risk": "standard",
+      "requiresAdmin": true,
+      "addsService": false,
+      "addsKernelDriver": false,
+      "requestedExceptions": [],
+      "reviewReference": "review/example-browser/1.0.0-r1"
+    }
+  }
+}
+

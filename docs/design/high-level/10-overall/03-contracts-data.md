@@ -44,6 +44,10 @@ method-bound upload/download grants issued only after authorization and quota ch
 A compatibility `POST /api/v1/analyses:upload-and-create` convenience endpoint may support small
 files, but internally uses the same upload/finalize/create state machine and limits body size.
 
+Catalog/image-build routes and report/export/webhook/integration routes are specified in
+[Software Catalog and Windows Image Composition](05-software-catalog-image-composition.md) and
+[API, Identity, Observability, and Workflow Integrations](06-api-identity-observability-integrations.md).
+
 ## Event envelope
 
 Events are accepted at least once and ordered by relay ingest sequence, not by an untrusted Windows
@@ -118,6 +122,10 @@ flowchart LR
 | event pipeline | event chunks, ingest cursors, projection checkpoints | event/query API |
 | artifact service | artifact manifest, hashes, disposition, scanner state, retention/legal hold | artifact API and brokered grants |
 | detection service | rule bundles, versions, signatures, matches, ATT&CK mappings | detection API/events |
+| catalog service | package manifests/review state, recipes/resolution, license references | catalog/image API |
+| image-build/promotion service | build state, provenance, candidate/promoted/revoked images | build API and Kubernetes build resources |
+| report/export service | report versions, export jobs/objects, redaction and expiry | report/export API |
+| webhook/integration service | subscriptions, delivery attempts/checkpoints and connector configuration | webhook/adapter API |
 | operator | `Analysis` status and Kubernetes child inventory | Kubernetes API only |
 
 ## PostgreSQL logical model
@@ -133,6 +141,11 @@ flowchart LR
 | `dns_observation` | process instance, query, type, answers, response code, sequence |
 | `artifact` | logical type, size, SHA-256, object reference, disposition, encryption/retention metadata |
 | `detection_match` | rule bundle/version/rule ID, event/process/artifact reference, severity/confidence |
+| `software_package_version` | project/curated scope, exact version/revision, manifest digest, review/license/artifact references |
+| `windows_image_recipe` | authored/resolved immutable recipe, digest, compatibility and project scope |
+| `image_build` / `image_version` | phase, builder inventory, provenance/validation, promotion/revocation |
+| `export_job` | report version, format/options/redaction, phase, output hash/size/expiry |
+| `webhook_subscription` / `delivery` | endpoint policy, event filters, secret reference, attempts/checkpoint/dead letter |
 | `audit_event` | actor, action, target, reason, request ID, source, result, timestamp |
 | `outbox` | aggregate ID, command type/version, payload, attempts, dispatch timestamp |
 
@@ -149,6 +162,9 @@ events/<project-id>/<analysis-id>/<chunk-sequence>.ndjson.zst
 artifacts/<project-id>/<analysis-id>/<artifact-id>/content
 manifests/<project-id>/<analysis-id>/<result-version>.json
 reports/<project-id>/<analysis-id>/<report-version>/report.json
+exports/<project-id>/<export-id>/content
+software/<scope-id>/<package-id>/<version>/<revision>/<artifact-id>
+image-provenance/<scope-id>/<image-version-id>/provenance.json
 ```
 
 Buckets or access points separate quarantine, event, artifact, and report policies. Production

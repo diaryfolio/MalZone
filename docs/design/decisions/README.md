@@ -20,3 +20,5 @@ flowchart LR
 | [0005](0005-local-airgapped-baseline.md) | every required capability operates locally and air-gapped | accepted |
 | [0006](0006-no-unrestricted-egress.md) | support offline, simulated, and controlled networking only | accepted |
 | [0007](0007-gateway-appliance-boundary.md) | keep the production gateway off the cluster pod network | accepted |
+| [0008](0008-immutable-software-recipes.md) | compose client software through immutable offline image recipes | accepted |
+| [0009](0009-api-first-integrations.md) | expose UI and integrations through the same versioned API contracts | accepted |

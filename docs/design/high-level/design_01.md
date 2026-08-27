@@ -30,6 +30,8 @@ reports—not a dependency on ANY.RUN or an attempt to reproduce its proprietary
 | Control | admission, scheduling, `Analysis` reconciliation, timeouts, cleanup, status projection | sample execution, raw artifact parsing in privileged processes |
 | Analysis | disposable Windows VM, per-analysis relay, network gateway/simulator, capture | reusable credentials, cluster service discovery, host paths, cross-analysis networks |
 | Data | PostgreSQL metadata, NATS streams, S3-compatible quarantine/artifact buckets | direct guest access, cross-service table access, executable content rendering |
+| Image supply | package catalog/mirror, isolated builder VMs, validation, immutable golden-image promotion | analysis samples, mutable Internet installers, reusable license/build secrets in images |
+| Integration | versioned API, report/export jobs, webhook dispatch, provider adapters | direct database/NATS/S3/Kubernetes/VM access or vendor credentials in core services |
 | Operations | identity, secrets, policy, audit, monitoring, image/template promotion | analyst workflow state or malware payloads in logs |
 
 ## Non-negotiable invariants
@@ -87,6 +89,14 @@ flowchart TB
     Gateway -->|"PCAP and flow metadata"| Relay
     Gateway -. "optional policy-controlled egress" .-> Internet["Public Internet"]
     API --> Object
+
+    subgraph ImageSupply["Local image supply plane"]
+      Catalog["software catalog + recipe resolver"]
+      Builder["isolated Windows builder VM"]
+      Golden["approved golden snapshot"]
+      Catalog --> Builder --> Golden
+    end
+    Golden --> Operator
 ```
 
 The relay is dual-attached but is not a router: its secondary interface terminates a small,
@@ -143,6 +153,8 @@ sequenceDiagram
 | S3-compatible object storage for all bulk content | Scales PCAP/dumps and supports retention/immutability controls | Every download and preview needs quarantine policy |
 | Go for API/operator/relay/agent; TypeScript for UI | Shared contracts, strong Kubernetes ecosystem, simple static Windows agent | Windows collector work still requires native API expertise |
 | Internet modes are `offline`, `simulated`, and `controlled` | Makes risk explicit and defaults safe | “Unrestricted Internet” is intentionally unsupported |
+| Exact software manifests build immutable images | Reproducible client-selected OS software without Internet/runtime installation | Requires catalog, mirror, hostile builder zone, licensing and promotion workflow |
+| UI and integrations share versioned APIs | Preserves API-first automation and prevents privileged UI-only behavior | Requires OpenAPI compatibility, machine identity, exports, webhooks and adapter conformance |
 
 ## Design scope and non-goals
 

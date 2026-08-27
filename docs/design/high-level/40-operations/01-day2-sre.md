@@ -39,6 +39,9 @@ baseline. Security invariants are not traded against availability error budgets.
 | event acceptance durability | ≥ 99.99% after relay acknowledgment | explicit gap events count as loss, not success |
 | result manifest completeness | 100% terminal analyses | includes declared degraded collectors |
 | forbidden-path connectivity | 0 successful probes | any success is a security incident |
+| report/export API | p95 metadata query ≤ 2 sec; bounded export tracked asynchronously | artifact size/format reported separately |
+| signed webhook delivery | 99.9% accepted events reach success or visible dead letter within policy | upstream endpoint downtime is reported separately |
+| promoted image reproducibility | 100% have verified recipe/provenance/validation | no image is selectable without promotion evidence |
 
 ## Required telemetry
 
@@ -60,7 +63,12 @@ Metrics include:
 - gateway allowed/blocked flows, bytes, destination classes, capture health/drop rate;
 - agent/collector health, clock offset, dropped/degraded event counts;
 - console sessions/tickets/rejections/idle expiry, without keystroke or clipboard content;
-- API request latency/result by safe route template, RBAC/quota denials, and audit-export lag.
+- API request latency/result by safe route template, RBAC/quota denials, and audit-export lag;
+- OIDC/JWKS health, login/token failure by safe reason, machine-client scope/quota denials;
+- report/export queue age, duration, format/bytes, failures, expiry and download authorization;
+- webhook/adapter delivery latency, retries, circuit state, dead-letter age and disclosure-policy denial;
+- catalog package/recipe state, compatibility/license blocks, build queue/phase duration, builder
+  VM/relay/disk/network residue, validation/promotion/revocation and local mirror capacity.
 
 Cardinality is bounded: raw hashes, filenames, URLs, domains, IPs, PIDs, usernames, and artifact IDs
 are evidence fields, not metric labels.
@@ -79,6 +87,9 @@ are evidence fields, not metric labels.
 | queue/object/database capacity critical | stop admission before lifecycle/control capacity is consumed |
 | audit export lag/immutability failure | block privileged changes and controlled egress until restored |
 | backup or restore drill stale | production-readiness alert, not a low-priority report |
+| promoted image provenance/signature/validation missing or revoked | block profile admission and stop affected new starts |
+| builder forbidden path or post-build secret residue | quarantine candidate, stop builds, isolate/rebuild builder node |
+| SSO or webhook signing/audit integrity failure | fail protected operation closed; pause privileged integrations |
 
 ## Runbooks
 
@@ -95,7 +106,11 @@ At minimum, versioned runbooks cover:
 - rotate certificates/keys with overlap and verify old-key revocation;
 - handle object-store exhaustion, event storm, clone/storage failure, and CNI leak;
 - perform legal hold, project deletion, and verified data erasure;
-- generate a sanitized support bundle without samples or behavior payloads.
+- generate a sanitized support bundle without samples or behavior payloads;
+- import/review/build/promote/revoke a software version or image, quarantine a builder node, and
+  clean an interrupted build;
+- recover local OIDC, rotate machine/webhook identities, replay dead-letter deliveries, and rebuild
+  an export without changing its source report version.
 
 Every destructive or break-glass command first resolves exact analysis/session/resource labels and
 records an audit reason. Broad namespace deletion is not a normal cleanup mechanism.
@@ -110,6 +125,8 @@ records an audit reason. Broad namespace deletion is not a normal cleanup mechan
 | golden images | signed source/build manifests plus protected snapshot/export in separate failure domain | import, verify signature/hash, boot canary, pass isolation suite |
 | configuration/policy | signed Git release/GitOps source and secret-manager backup | recreate clean cluster without copying runtime credentials |
 | audit | continuous export to independently administered append-only local store | query actor/action timeline and verify integrity chain |
+| catalog/recipes/provenance | signed versioned repository plus immutable mirrored artifacts and protected promotion records | rebuild candidate from exact inputs and compare inventory/validation |
+| IdP/integration configuration | local IdP/config backup; connector secrets in secret authority; delivery checkpoints backed up | restore login/machine scopes and replay without duplicate side effects |
 
 Backups never include live session private keys. Restore into production does not automatically
 resume incomplete detonations: non-terminal analyses are stopped, evidence is marked interrupted,
@@ -135,9 +152,11 @@ enabled last.
 
 ## Capacity and admission
 
-Capacity models include VM RAM/vCPU, root clone IOPS/throughput, boot storms, Windows licensing,
+Capacity models include analysis and builder VM RAM/vCPU, root clone IOPS/throughput, boot storms,
+image-build duration/cache/mirror/candidate/promoted snapshot storage, Windows/application licensing,
 network capture throughput/storage, relay CPU/memory, events/sec, NATS retention, projector lag,
-object bytes, database write/index load, and report/static-parser workers. Per-profile benchmark
+object bytes, database write/index load, report/export workers, webhook/adapter backlog, and local
+OIDC/observability capacity. Per-profile benchmark
 results feed an admission controller. Queues have maximum age; users receive a clear queued,
 capacity-rejected, or quota-rejected state.
 
@@ -153,4 +172,3 @@ cannot starve ordinary analysis.
 - monthly: negative isolation matrix, emergency stop/egress cut, project RBAC review, node rebuild;
 - per release: full compatibility, upgrade/rollback, load, fault injection, cleanup crash matrix;
 - quarterly: full DR exercise, threat-model/risk review, access/split-duty review, retention proof.
-
