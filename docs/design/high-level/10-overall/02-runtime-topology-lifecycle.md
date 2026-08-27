@@ -152,6 +152,34 @@ Finalization has a deadline for user-visible alerting, not for abandoning cleanu
 reaper independently lists resources by analysis label and repairs stale owners. Removing the
 finalizer manually is an audited break-glass action followed by a mandatory residue scan.
 
+## Executable development POC
+
+The first executable slice deliberately proves only Kubernetes API, CRD, reconciliation, bounded
+runner, result capture, cancellation, and cleanup mechanics. It is not the production analysis
+lifecycle above and must never receive malware. Its `malzone.io/v1alpha1` POC spec accepts only a
+short `canary` string, a 1–60 second duration, and a cancellation flag.
+
+```mermaid
+flowchart LR
+    Client["local client via port-forward"] --> POCAPI["POC API"]
+    POCAPI --> CR["POC Analysis CR"]
+    Operator["namespace-scoped operator"] --> CR
+    Operator --> Job["tokenless, non-root canary Job"]
+    Job --> Logs["bounded structured result"]
+    Logs --> Operator
+    Operator --> Delete["foreground Job deletion"]
+    Delete --> Terminal["terminal status + cleanupVerified"]
+```
+
+The POC API writes the CR directly because PostgreSQL/outbox/dispatcher do not exist yet. The Job
+is a Linux control-flow canary, not a VM, has no service-account token, has deny-all networking,
+cannot select a command or image through the public request, and runs the same immutable MalZone
+binary in `runner` mode. The operator withholds terminal status until the Job API returns not found.
+The runner observes SIGTERM through process context, and the Job uses a bounded termination grace
+period so cancellation does not wait for the requested canary duration.
+Production promotion requires the original PostgreSQL/outbox authority, production CRD, KubeVirt
+clone, relay, gateway, finalizer/reaper inventory, identity revocation, and fault-injection evidence.
+
 ## Agent session protocol
 
 The Windows agent initiates all management connections. At first boot it receives a one-use
@@ -179,4 +207,3 @@ agent batches more aggressively, then drops configured low-priority detail such 
 reads before it drops process-start, execution, collector-health, or stop events. Every gap emits a
 `collector.degraded` event with counters and interval. Artifact and event budgets stop collection
 or the analysis according to profile policy; silent truncation is prohibited.
-

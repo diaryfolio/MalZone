@@ -1,0 +1,63 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: malzone-api
+  labels:
+    {{- include "malzone.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["malzone.io"]
+    resources: ["analyses"]
+    verbs: ["create", "get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: malzone-api
+  labels:
+    {{- include "malzone.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: malzone-api
+subjects:
+  - kind: ServiceAccount
+    name: malzone-api
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: malzone-operator
+  labels:
+    {{- include "malzone.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["malzone.io"]
+    resources: ["analyses"]
+    verbs: ["get", "list"]
+  - apiGroups: ["malzone.io"]
+    resources: ["analyses/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: malzone-operator
+  labels:
+    {{- include "malzone.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: malzone-operator
+subjects:
+  - kind: ServiceAccount
+    name: malzone-operator
+    namespace: {{ .Release.Namespace }}

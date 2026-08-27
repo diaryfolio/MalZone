@@ -1,5 +1,13 @@
 # Components and Technology Decisions
 
+## Current executable slice
+
+The repository includes a dependency-free Go POC binary with `api`, `operator`, and `runner` modes,
+packaged by a Helm chart. The API and operator have distinct namespace-scoped service accounts; the
+runner has no token, runs non-root with a read-only root filesystem and all capabilities dropped,
+and is selected by a deny-all NetworkPolicy. This slice validates reconciliation and cleanup on the
+available ARM64 k3d cluster. It is not a substitute for the Windows/KubeVirt components below.
+
 ## Component map
 
 ```mermaid

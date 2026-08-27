@@ -1,0 +1,103 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: analyses.malzone.io
+spec:
+  group: malzone.io
+  scope: Namespaced
+  names:
+    plural: analyses
+    singular: analysis
+    kind: Analysis
+    shortNames: [mzanalysis]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Cleanup
+          type: boolean
+          jsonPath: .status.cleanupVerified
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [apiVersion, kind, metadata, spec]
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required: [sample, timeoutSeconds]
+              x-kubernetes-validations:
+                - rule: "self.sample == oldSelf.sample && self.timeoutSeconds == oldSelf.timeoutSeconds"
+                  message: "sample and timeoutSeconds are immutable"
+              properties:
+                sample:
+                  type: object
+                  required: [kind, content]
+                  properties:
+                    kind:
+                      type: string
+                      enum: [canary]
+                    content:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                timeoutSeconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 60
+                  default: 3
+                cancelRequested:
+                  type: boolean
+                  default: false
+            status:
+              type: object
+              properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
+                phase:
+                  type: string
+                  enum: [Provisioning, Running, Collecting, Cleaning, Succeeded, Failed, Cancelled]
+                pendingOutcome:
+                  type: string
+                  enum: ["", Succeeded, Failed, Cancelled]
+                message:
+                  type: string
+                  maxLength: 512
+                runnerJob:
+                  type: string
+                startedAt:
+                  type: string
+                  format: date-time
+                completedAt:
+                  type: string
+                  format: date-time
+                cleanupVerified:
+                  type: boolean
+                result:
+                  type: object
+                  properties:
+                    sha256:
+                      type: string
+                      pattern: "^[a-f0-9]{64}$"
+                    summary:
+                      type: string
+                      maxLength: 512
+                    serviceAccountTokenAbsent:
+                      type: boolean
+                    kubernetesApiDenied:
+                      type: boolean

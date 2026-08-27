@@ -1,0 +1,30 @@
+image:
+  repository: malzone-poc
+  tag: dev
+  pullPolicy: IfNotPresent
+
+api:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 32Mi
+
+operator:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 32Mi
+
+service:
+  port: 8080
+
+pocNetworkPolicy:
+  enabled: true

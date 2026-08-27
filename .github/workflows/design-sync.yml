@@ -22,8 +22,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate design, governance, and contracts
-        run: make design-check
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.24.x"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Validate design, governance, contracts, code, and Helm
+        run: make check
 
       - name: Validate changed-file design synchronization
         if: github.event_name == 'pull_request'

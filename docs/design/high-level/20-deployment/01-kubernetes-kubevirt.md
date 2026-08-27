@@ -1,5 +1,46 @@
 # Kubernetes and KubeVirt Deployment Design
 
+## Current k3d development deployment
+
+The executable POC installs through `charts/malzone` into the dedicated `malzone-system` namespace.
+The deployment target observed on 2026-08-27 is a two-node ARM64 k3d/K3s cluster with local-path
+storage and Traefik, but without KubeVirt, CDI, Multus, or snapshot CRDs. The chart therefore runs
+only the harmless Linux Job lifecycle backend. It applies restricted Pod Security admission,
+namespace-scoped Roles, separate service accounts, a ClusterIP-only API, and deny-all runner
+networking.
+
+```mermaid
+flowchart LR
+    Helm["Helm release: malzone"] --> API["API Deployment + ClusterIP"]
+    Helm --> Operator["Operator Deployment"]
+    Helm --> RBAC["namespace Roles + service accounts"]
+    Helm --> Policy["runner deny-all NetworkPolicy"]
+    CRD["Analysis CRD"] --> Operator
+    Operator --> Job["ephemeral canary Job"]
+```
+
+`make deploy-poc` cross-compiles a static ARM64 binary, builds and imports the local image into
+k3d, applies the CRD, and installs/upgrades the chart. `make e2e-poc` uses a port-forward, submits a
+canary, verifies rejection of an arbitrary command, waits for terminal status, verifies token/API
+denial evidence, and asserts zero labelled Job/Pod residue. This evidence applies only to the named
+development cluster and does not prove production VM isolation.
+
+The runner waits briefly before its denial probe because the k3d network-policy controller updates
+rules after a new Pod receives an IP. The E2E result therefore proves steady-state denial only. The
+observed startup window is unacceptable for hostile execution and reinforces the production design
+requirement that guest reachability be denied before sample delivery through pre-created secondary
+networks/gateway policy rather than a label-selected Pod policy.
+
+Microsoft currently provides Windows 11 Enterprise evaluation media for x64 and Arm64, and
+KubeVirt supports Arm64 plus software emulation, but a supported MalZone Windows template also
+requires licensed media handling, VirtIO drivers, CDI import, snapshot-capable storage, Multus,
+and measured virtualization performance. Those prerequisites are intentionally not installed into
+this shared k3d cluster as part of the POC.
+
+`examples/windows/windows11-enterprise-template.yaml.example` is the reviewed, halted starter
+skeleton for that future environment. It has no pod interface and contains unresolved per-analysis
+PVC and Multus network placeholders so it cannot be mistaken for an approved runnable template.
+
 ## Deployment profiles
 
 | Profile | Purpose | Security claim |

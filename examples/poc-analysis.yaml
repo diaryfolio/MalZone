@@ -1,0 +1,9 @@
+apiVersion: malzone.io/v1alpha1
+kind: Analysis
+metadata:
+  name: harmless-canary
+spec:
+  sample:
+    kind: canary
+    content: hello-malzone
+  timeoutSeconds: 3

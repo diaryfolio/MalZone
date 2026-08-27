@@ -6,6 +6,11 @@ Security is not a final hardening phase. Each phase ships its own identity, auth
 policy, cleanup, observability, and negative tests. A capability stays `designed` in the conformance
 map until working code, packaging, and automated evidence exist.
 
+The current executable Linux Job POC is pre-production scaffolding across portions of phases 0–2:
+it proves a versioned canary-only API, CRD, namespace-scoped operator, Helm packaging, restricted
+runner, status collection, cancellation unit path, and cleanup E2E path. It does not satisfy any
+Windows/KubeVirt, product-state, identity, evidence, or production-isolation phase gate below.
+
 ```mermaid
 flowchart LR
     P0["0. contracts + harness"] --> P1["1. isolated VM spine"]

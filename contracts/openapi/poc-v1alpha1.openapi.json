@@ -1,0 +1,102 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MalZone harmless lifecycle POC API",
+    "version": "0.1.0-poc",
+    "description": "Development-only API. It accepts bounded canary text and never accepts or executes a malware sample, URL, command, or image reference."
+  },
+  "servers": [
+    {"url": "/"}
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {"operationId": "health", "responses": {"200": {"description": "Process is live"}}}
+    },
+    "/readyz": {
+      "get": {"operationId": "ready", "responses": {"200": {"description": "Kubernetes API is reachable"}, "503": {"$ref": "#/components/responses/Problem"}}}
+    },
+    "/api/v1alpha1/analyses": {
+      "get": {
+        "operationId": "listPocAnalyses",
+        "responses": {"200": {"description": "POC analyses", "content": {"application/json": {"schema": {"type": "object"}}}}}
+      },
+      "post": {
+        "operationId": "createPocAnalysis",
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CreateAnalysis"}}}
+        },
+        "responses": {
+          "201": {"description": "Created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Analysis"}}}},
+          "409": {"$ref": "#/components/responses/Problem"},
+          "422": {"$ref": "#/components/responses/Problem"}
+        }
+      }
+    },
+    "/api/v1alpha1/analyses/{name}": {
+      "parameters": [{"name": "name", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?$", "maxLength": 63}}],
+      "get": {
+        "operationId": "getPocAnalysis",
+        "responses": {"200": {"description": "Analysis", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Analysis"}}}}, "404": {"$ref": "#/components/responses/Problem"}}
+      }
+    },
+    "/api/v1alpha1/analyses/{name}/cancel": {
+      "parameters": [{"name": "name", "in": "path", "required": true, "schema": {"type": "string", "maxLength": 63}}],
+      "post": {
+        "operationId": "cancelPocAnalysis",
+        "responses": {"202": {"description": "Cancellation requested", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Analysis"}}}}, "404": {"$ref": "#/components/responses/Problem"}}
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "Problem": {
+        "description": "Problem details",
+        "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}
+      }
+    },
+    "schemas": {
+      "CreateAnalysis": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sample"],
+        "properties": {
+          "name": {"type": "string", "maxLength": 63, "pattern": "^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?$"},
+          "sample": {"$ref": "#/components/schemas/CanarySample"},
+          "timeoutSeconds": {"type": "integer", "minimum": 1, "maximum": 60, "default": 3}
+        }
+      },
+      "CanarySample": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "content"],
+        "properties": {
+          "kind": {"type": "string", "const": "canary"},
+          "content": {"type": "string", "minLength": 1, "maxLength": 256}
+        }
+      },
+      "Analysis": {
+        "type": "object",
+        "required": ["apiVersion", "kind", "metadata", "spec"],
+        "properties": {
+          "apiVersion": {"type": "string", "const": "malzone.io/v1alpha1"},
+          "kind": {"type": "string", "const": "Analysis"},
+          "metadata": {"type": "object"},
+          "spec": {"type": "object"},
+          "status": {"type": "object"}
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "required": ["type", "title", "status", "code", "detail"],
+        "properties": {
+          "type": {"type": "string"},
+          "title": {"type": "string"},
+          "status": {"type": "integer"},
+          "code": {"type": "string"},
+          "detail": {"type": "string"}
+        }
+      }
+    }
+  }
+}
